@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Management - NYC</title><script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script><script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../css/style.css"><script src="../js/theme.js"></script>
+</head>
+<body class="flex flex-col min-h-screen">
+    <nav class="sticky top-0 z-50 bg-[var(--bg-color)] brutal-border border-x-0 border-t-0 px-6 py-4 flex items-center justify-between"><a href="../index.html" class="flex items-center gap-4 text-2xl font-black uppercase tracking-tighter text-[var(--foreground)]"><strong class="bg-[var(--primary)] text-black brutal-border px-2">NYC</strong><span>NOT YOUR COLLEGE</span></a><div class="flex items-center gap-6 font-bold" id="nav-links"></div></nav>
+    <main class="flex-grow w-full max-w-7xl mx-auto px-6 py-12 relative z-10">
+        <div class="mb-10"><span class="bg-[var(--accent)] text-white px-3 py-1 text-sm font-black uppercase brutal-border inline-block mb-4">Administrator</span><h1 class="text-5xl md:text-6xl font-black uppercase tracking-tighter text-[var(--foreground)] text-shadow-brutal">MEDIA LIBRARY</h1><p class="font-bold text-lg mt-3">Uploaded originals and generated HLS processing states.</p></div>
+        <div id="media-error" class="hidden bg-red-500 text-white brutal-border p-4 font-bold mb-6"></div>
+        <section class="bg-[var(--bg-color)] brutal-border brutal-shadow p-6 md:p-8 overflow-x-auto"><table class="w-full min-w-[1180px] text-left font-bold"><thead class="border-b-4 border-[var(--foreground)]"><tr><th class="py-4 px-3 uppercase">File</th><th class="py-4 px-3 uppercase">Type</th><th class="py-4 px-3 uppercase">Size</th><th class="py-4 px-3 uppercase">Status</th><th class="py-4 px-3 uppercase">Progress</th><th class="py-4 px-3 uppercase">Course / Module / Lesson</th><th class="py-4 px-3 uppercase text-right">Actions</th></tr></thead><tbody id="media-table"><tr><td colspan="7" class="py-8 text-center">Loading media…</td></tr></tbody></table></section>
+        <input id="media-replacement-input" type="file" accept="video/mp4,video/quicktime,video/webm,video/x-matroska,audio/mpeg,audio/wav,audio/aac" class="hidden">
+    </main>
+    <script src="../js/api.js"></script><script src="../js/admin-media.js"></script><script src="../js/navbar.js"></script>
+</body>
+</html>

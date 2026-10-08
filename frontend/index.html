@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYC</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/theme.js"></script>
+</head>
+<body class="flex flex-col overflow-x-hidden">
+
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 bg-[var(--bg-color)] brutal-border border-x-0 border-t-0 px-6 py-4 flex items-center justify-between">
+        <a href="index.html" class="flex items-center gap-4 text-2xl font-black uppercase tracking-tighter hover:opacity-80 transition-opacity text-[var(--foreground)]">
+            <svg width="35" height="35" viewBox="0 0 100 100" class="animate-[spin_10s_linear_infinite] overflow-visible">
+                <rect x="0" y="0" width="100" height="100" fill="var(--primary)" stroke="var(--foreground)" stroke-width="8"/>
+                <text x="50" y="65" font-family="monospace" font-size="40" font-weight="900" text-anchor="middle" fill="var(--foreground)">NYC</text>
+            </svg>
+            <span>NOT YOUR COLLEGE</span>
+        </a>
+        <div class="flex items-center gap-6 font-bold" id="nav-links">
+            <!-- Injected via navbar.js -->
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow w-full max-w-7xl mx-auto px-6 py-12 md:py-24 flex flex-col lg:flex-row items-center justify-between gap-16 relative z-10">
+        
+        <!-- Left Side: Typography & CTA -->
+        <div class="flex-1 flex flex-col items-start">
+            <h1 class="text-7xl md:text-8xl lg:text-[110px] font-black leading-[0.9] tracking-tighter uppercase text-shadow-brutal mb-8 text-[var(--foreground)]">
+                NOT YOUR<br/>COLLEGE
+            </h1>
+            
+            <div class="border-l-8 border-[var(--primary)] pl-6 mb-12">
+                <p class="text-xl md:text-2xl font-bold uppercase tracking-wide leading-relaxed text-[var(--foreground)] max-w-lg">
+                    Bridge the gap between outdated college theory and brutal industry demands.
+                </p>
+            </div>
+            
+            <div class="flex flex-wrap gap-6">
+                <a href="courses.html" class="bg-[var(--primary)] text-black brutal-border px-8 py-4 font-black uppercase text-xl brutal-shadow hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[10px_10px_0px_0px_var(--foreground)] transition-all flex items-center gap-2">
+                    Explore Courses <i data-lucide="arrow-right" class="w-6 h-6"></i>
+                </a>
+                <a href="register.html" id="hero-join-btn" class="bg-[var(--bg-color)] text-[var(--foreground)] brutal-border px-8 py-4 font-black uppercase text-xl brutal-shadow hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[10px_10px_0px_0px_var(--foreground)] transition-all">
+                    Join NYC
+                </a>
+            </div>
+        </div>
+
+        <!-- Right Side: Brutalist Graphic -->
+        <div class="flex-1 w-full relative flex justify-center lg:justify-end mt-12 lg:mt-0">
+            <!-- Red Background Offset Box -->
+            <div class="relative bg-[var(--bg-color)] brutal-border p-8 md:p-16 brutal-shadow-lg max-w-[500px] w-full aspect-square flex items-center justify-center">
+                
+                <!-- Inner Yellow Box with Rotating Logo/Graphic -->
+                <div class="bg-[var(--primary)] brutal-border w-full h-full flex items-center justify-center relative overflow-hidden group">
+                    <!-- Crosshair guidelines -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-50">
+                        <div class="w-full h-1 border-t-4 border-dashed border-[var(--foreground)]"></div>
+                        <div class="h-full w-1 border-l-4 border-dashed border-[var(--foreground)] absolute"></div>
+                    </div>
+                    
+                    <!-- Massive Rotating NYC Graphic -->
+                    <svg viewBox="0 0 100 100" class="w-3/4 h-3/4 animate-[spin_15s_linear_infinite] group-hover:scale-110 transition-transform duration-500 overflow-visible">
+                        <rect x="0" y="0" width="100" height="100" fill="var(--primary)" stroke="var(--foreground)" stroke-width="8"/>
+                        <text x="50" y="65" font-family="monospace" font-size="40" font-weight="900" text-anchor="middle" fill="var(--foreground)">NYC</text>
+                    </svg>
+                </div>
+                
+                <!-- Slanted Marquee Tape -->
+                <div class="absolute -bottom-8 -left-12 right-12 bg-[var(--primary)] brutal-border py-3 transform -rotate-3 overflow-hidden shadow-[4px_4px_0px_0px_var(--foreground)] z-20">
+                    <div class="animate-marquee whitespace-nowrap text-xl font-black uppercase text-black flex items-center gap-8">
+                        <span>JUST CODE.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>NO BS.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>JUST CODE.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>NO BS.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>JUST CODE.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>NO BS.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>JUST CODE.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>NO BS.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>JUST CODE.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>NO BS.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>JUST CODE.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>NO BS.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>JUST CODE.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>NO BS.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>JUST CODE.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                        <span>NO BS.</span> <i data-lucide="zap" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+
+    
+    <!-- Core Principles Section -->
+    <section class="w-full max-w-7xl mx-auto px-6 py-20 z-10 border-t-8 border-[var(--foreground)] mt-12">
+        <div class="flex flex-col mb-16 gap-6">
+            <h2 class="text-5xl md:text-6xl font-black uppercase tracking-tighter text-[var(--foreground)] text-shadow-brutal">CORE PRINCIPLES</h2>
+            <p class="text-2xl font-bold max-w-4xl text-[var(--foreground)] leading-relaxed">
+                We don't teach you how to pass exams or solve abstract algorithms. We teach you how to build production-grade software that actually scales. These are the non-negotiable principles that dictate every single course we ship.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <!-- Principle 1 -->
+            <div class="bg-[var(--primary)] brutal-border p-8 flex flex-col brutal-shadow group transition-transform hover:-translate-y-2 hover:-translate-x-2 hover:shadow-[12px_12px_0px_0px_var(--foreground)]">
+                <div class="w-16 h-16 bg-white brutal-border rounded-full flex items-center justify-center mb-6 brutal-shadow group-hover:scale-110 transition-transform">
+                    <i data-lucide="hammer" class="w-8 h-8 text-black"></i>
+                </div>
+                <h3 class="text-3xl font-black uppercase mb-4 tracking-tight leading-none text-black">REAL-WORLD ENGINEERING</h3>
+                <p class="text-xl font-bold text-black leading-snug">
+                    Forget outdated college theories. Build scalable, distributed systems exactly the way top tech companies do it in production.
+                </p>
+            </div>
+
+            <!-- Principle 2 -->
+            <div class="bg-[var(--accent)] brutal-border p-8 flex flex-col brutal-shadow group transition-transform hover:-translate-y-2 hover:-translate-x-2 hover:shadow-[12px_12px_0px_0px_var(--foreground)]">
+                <div class="w-16 h-16 bg-white brutal-border rounded-full flex items-center justify-center mb-6 brutal-shadow group-hover:scale-110 transition-transform">
+                    <i data-lucide="users" class="w-8 h-8 text-black"></i>
+                </div>
+                <h3 class="text-3xl font-black uppercase mb-4 tracking-tight leading-none text-white">INDUSTRY-LED CURRICULUM</h3>
+                <p class="text-xl font-bold text-white leading-snug">
+                    Every module is designed by senior engineers from FAANG. You learn what actually matters to pass the interviews and thrive on the job.
+                </p>
+            </div>
+
+            <!-- Principle 3 -->
+            <div class="bg-[var(--bg-color)] brutal-border p-8 flex flex-col brutal-shadow group transition-transform hover:-translate-y-2 hover:-translate-x-2 hover:shadow-[12px_12px_0px_0px_var(--primary)]">
+                <div class="w-16 h-16 bg-[var(--primary)] brutal-border rounded-full flex items-center justify-center mb-6 brutal-shadow group-hover:scale-110 transition-transform">
+                    <i data-lucide="zap" class="w-8 h-8 text-black"></i>
+                </div>
+                <h3 class="text-3xl font-black uppercase mb-4 tracking-tight leading-none text-[var(--foreground)]">ZERO FLUFF</h3>
+                <p class="text-xl font-bold text-gray-700 dark:text-gray-300 leading-snug">
+                    No boring lectures. No 40-hour deep dives into history. Just straight-to-the-point, high-signal technical content.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recruiters Section -->
+    <section class="w-full max-w-7xl mx-auto px-6 py-16 z-10 border-t-8 border-[var(--foreground)] mt-12">
+        <div class="mb-10">
+            <span class="bg-[var(--primary)] text-black px-3 py-1 text-sm font-black uppercase brutal-border inline-block mb-4">Build skills for the teams shaping tech</span>
+            <h2 class="text-5xl md:text-6xl font-black uppercase tracking-tighter text-[var(--foreground)] text-shadow-brutal">TOP TECH RECRUITERS</h2>
+            <p class="text-xl font-bold mt-5 max-w-3xl text-[var(--foreground)]">Explore skills used across the world's leading technology companies.</p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6" aria-label="Leading technology companies">
+            <div class="recruiter-mark" role="img" aria-label="Google logo"><span class="sr-only">Google</span><svg viewBox="0 0 100 70" aria-hidden="true"><path d="M80 35a30 30 0 1 1-8-20" fill="none" stroke="#4285F4" stroke-width="11" stroke-linecap="round"/><path d="M72 15a30 30 0 0 0-21-10" fill="none" stroke="#EA4335" stroke-width="11" stroke-linecap="round"/><path d="M51 5a30 30 0 0 0-25 10" fill="none" stroke="#FBBC05" stroke-width="11" stroke-linecap="round"/><path d="M26 15a30 30 0 0 0-6 34" fill="none" stroke="#34A853" stroke-width="11" stroke-linecap="round"/><path d="M50 35h30" stroke="#4285F4" stroke-width="11"/></svg></div>
+            <div class="recruiter-mark" role="img" aria-label="Microsoft logo"><span class="sr-only">Microsoft</span><svg viewBox="0 0 100 70" aria-hidden="true"><rect x="14" y="10" width="25" height="23" fill="#F25022"/><rect x="43" y="10" width="25" height="23" fill="#7FBA00"/><rect x="14" y="37" width="25" height="23" fill="#00A4EF"/><rect x="43" y="37" width="25" height="23" fill="#FFB900"/></svg></div>
+            <div class="recruiter-mark" role="img" aria-label="Amazon logo"><span class="sr-only">Amazon</span><svg viewBox="0 0 100 70" aria-hidden="true"><text x="24" y="50" font-family="Arial,sans-serif" font-size="58" font-weight="700" fill="currentColor">a</text><path d="M35 55c15 12 38 11 51-1" fill="none" stroke="#FF9900" stroke-width="5" stroke-linecap="round"/><path d="m78 51 9 1-4 8" fill="none" stroke="#FF9900" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="recruiter-mark" role="img" aria-label="Meta logo"><span class="sr-only">Meta</span><svg viewBox="0 0 100 70" aria-hidden="true"><path d="M13 48c9-27 20-34 30-10l7 17c8 17 17 12 28-13 9-22 17-21 23 1" fill="none" stroke="#0866FF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="recruiter-mark" role="img" aria-label="Apple logo"><span class="sr-only">Apple</span><svg viewBox="0 0 100 70" aria-hidden="true"><path d="M58 18c3-7 10-10 16-9 0 7-5 13-12 14M50 24c-7-5-17-2-23 5-10 12-4 31 3 39 4 5 8 6 13 4 5-2 9-2 14 0 5 2 10 1 14-5 4-5 6-10 7-14-9-4-12-17-2-23-7-9-18-10-26-6Z" fill="currentColor" transform="translate(0,-7) scale(.9)"/></svg></div>
+            <div class="recruiter-mark" role="img" aria-label="NVIDIA logo"><span class="sr-only">NVIDIA</span><svg viewBox="0 0 100 70" aria-hidden="true"><path d="M12 35c19-23 48-25 74 0-26 25-55 23-74 0Z" fill="none" stroke="#76B900" stroke-width="7"/><path d="M25 35c11-12 29-12 40 0-11 12-29 12-40 0Z" fill="none" stroke="#76B900" stroke-width="6"/><circle cx="45" cy="35" r="7" fill="#76B900"/><path d="M60 18c10 2 19 8 27 17" fill="none" stroke="#76B900" stroke-width="5"/></svg></div>
+            <div class="recruiter-mark" role="img" aria-label="Netflix logo"><span class="sr-only">Netflix</span><svg viewBox="0 0 100 70" aria-hidden="true"><path d="M24 8h17l21 54H45L24 8Zm0 0v54l17-3V8H24Zm38 0h17v54l-17-3V8Z" fill="#E50914"/></svg></div>
+            <div class="recruiter-mark" role="img" aria-label="Adobe logo"><span class="sr-only">Adobe</span><svg viewBox="0 0 100 70" aria-hidden="true"><path d="M15 61 39 8h17L32 61H15Zm70 0L61 8H44l24 53h17ZM39 45h23l8 16H31l8-16Z" fill="#E1251B"/></svg></div>
+            <div class="recruiter-mark" role="img" aria-label="Salesforce logo"><span class="sr-only">Salesforce</span><svg viewBox="0 0 100 70" aria-hidden="true"><path d="M29 51c-12 0-18-8-18-17 0-10 8-17 18-17 3-10 12-15 22-12 7 2 11 6 13 12 11-4 23 4 23 16 0 10-8 18-19 18H29Z" fill="#00A1E0"/><path d="m52 17-15 20h10l-3 15 19-24H52l4-11Z" fill="#fff"/></svg></div>
+            <div class="recruiter-mark" role="img" aria-label="IBM logo"><span class="sr-only">IBM</span><svg viewBox="0 0 100 70" aria-hidden="true"><text x="12" y="53" font-family="Arial,sans-serif" font-size="47" font-weight="900" letter-spacing="-4" fill="#1261FE">IBM</text><path d="M14 20h70M14 28h70M14 37h70M14 45h70M14 54h70" stroke="var(--bg-color)" stroke-width="2"/></svg></div>
+            <div class="recruiter-mark" role="img" aria-label="Stripe logo"><span class="sr-only">Stripe</span><svg viewBox="0 0 100 70" aria-hidden="true"><path d="M66 17c-5-5-13-8-22-8-15 0-25 8-25 20 0 11 8 16 22 20 10 3 13 5 13 9 0 4-4 6-10 6-8 0-17-4-23-10v15c6 5 15 8 25 8 16 0 27-8 27-21 0-11-7-17-22-21-9-3-13-4-13-8 0-3 3-5 9-5 7 0 14 3 19 7V17Z" fill="#635BFF" transform="translate(4,-4) scale(.88)"/></svg></div>
+            <div class="recruiter-mark" role="img" aria-label="Uber logo"><span class="sr-only">Uber</span><svg viewBox="0 0 100 70" aria-hidden="true"><path d="M25 10h13v31c0 10 5 16 13 16s13-6 13-16V10h13v31c0 18-10 29-26 29S25 59 25 41V10Z" fill="currentColor"/></svg></div>
+        </div>
+    </section>
+
+    <!-- Global Footer -->
+    <footer class="w-full bg-[var(--bg-color)] brutal-border border-x-0 border-b-0 py-8 px-6 mt-auto z-50">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="text-xl font-black uppercase tracking-tighter text-[var(--foreground)]">
+                © 2026 NOT YOUR COLLEGE
+            </div>
+            <div class="flex items-center gap-6">
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram" class="social-link p-3 brutal-border bg-[var(--bg-color)] text-[var(--foreground)] hover:bg-[var(--primary)] hover:-translate-y-1 hover:-translate-x-1 transition-transform brutal-shadow">
+                    <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="18" cy="6" r=".8" fill="currentColor" stroke="none"></circle></svg>
+                </a>
+                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube" title="YouTube" class="social-link p-3 brutal-border bg-[var(--bg-color)] text-[var(--foreground)] hover:bg-[var(--accent)] hover:-translate-y-1 hover:-translate-x-1 transition-transform brutal-shadow">
+                    <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12s0-3.2-.4-4.7a2.8 2.8 0 0 0-2-2C17.9 4.8 12 4.8 12 4.8s-5.9 0-7.6.5a2.8 2.8 0 0 0-2 2C2 8.8 2 12 2 12s0 3.2.4 4.7a2.8 2.8 0 0 0 2 2c1.7.5 7.6.5 7.6.5s5.9 0 7.6-.5a2.8 2.8 0 0 0 2-2C22 15.2 22 12 22 12Z"></path><path d="m10 15 5-3-5-3z" fill="currentColor" stroke="none"></path></svg>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/navbar.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

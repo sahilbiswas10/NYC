@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor - NYC</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script><script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css"><script src="js/theme.js"></script>
+</head>
+<body class="flex flex-col min-h-screen">
+    <nav class="sticky top-0 z-50 bg-[var(--bg-color)] brutal-border border-x-0 border-t-0 px-6 py-4 flex items-center justify-between">
+        <a href="index.html" class="flex items-center gap-4 text-2xl font-black uppercase tracking-tighter text-[var(--foreground)]"><strong class="bg-[var(--primary)] text-black brutal-border px-2">NYC</strong><span>NOT YOUR COLLEGE</span></a>
+        <div id="nav-links" class="flex items-center gap-6 font-bold"></div>
+    </nav>
+    <main class="flex-grow w-full max-w-7xl mx-auto px-6 py-12 relative z-10">
+        <a id="back-instructor-page" href="courses.html" class="inline-flex items-center gap-2 font-black uppercase mb-8">← BACK</a>
+        <div id="instructor-error" class="hidden bg-red-500 text-white brutal-border p-5 font-black mb-8"></div>
+        <section id="instructor-profile" class="grid grid-cols-1 lg:grid-cols-[minmax(250px,380px)_1fr] gap-10 items-start">
+            <img id="instructor-photo" class="hidden w-full aspect-[4/5] object-cover brutal-border brutal-shadow" alt="Instructor profile photo">
+            <div class="bg-[var(--bg-color)] brutal-border brutal-shadow p-8 md:p-12">
+                <span class="bg-[var(--primary)] text-black px-3 py-1 text-sm font-black uppercase brutal-border inline-block mb-5">Instructor</span>
+                <h1 id="instructor-name" class="text-5xl md:text-7xl font-black uppercase tracking-tighter text-shadow-brutal">Loading profile…</h1>
+                <p id="instructor-title" class="mt-5 text-xl font-black uppercase text-[var(--accent)]"></p>
+                <p id="instructor-bio" class="mt-8 text-lg font-bold leading-relaxed whitespace-pre-wrap"></p>
+            </div>
+        </section>
+        <section class="mt-16">
+            <h2 class="text-4xl md:text-5xl font-black uppercase tracking-tighter text-shadow-brutal mb-8">COURSES BY THIS INSTRUCTOR</h2>
+            <div id="instructor-courses" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"><p class="font-bold">Loading courses…</p></div>
+        </section>
+    </main>
+    <script src="js/api.js"></script><script src="js/instructor-profile.js"></script><script src="js/navbar.js"></script>
+</body>
+</html>

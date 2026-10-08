@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Course Preview - NYC</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script><script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/style.css"><script src="../js/theme.js"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+    <main class="bg-[var(--bg-color)] brutal-border brutal-shadow p-8 max-w-lg text-center">
+        <h1 class="text-3xl font-black uppercase">Opening course preview…</h1>
+        <p id="preview-error" class="hidden text-[var(--accent)] font-bold mt-4"></p>
+        <a href="courses.html" class="inline-block mt-6 font-black uppercase text-[var(--accent)] hover:underline">Back to courses</a>
+    </main>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const courseId = params.get('course') || params.get('id');
+        if (courseId && /^[a-f\d]{24}$/i.test(courseId)) {
+            window.location.replace(`../course.html?course=${encodeURIComponent(courseId)}`);
+        } else {
+            const error = document.getElementById('preview-error');
+            error.textContent = 'Choose a valid course before opening preview.';
+            error.classList.remove('hidden');
+        }
+    </script>
+    <script src="../js/navbar.js"></script>
+</body>
+</html>

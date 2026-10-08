@@ -1,0 +1,18 @@
+# Dependencies and local environment
+node_modules/
+.env
+.env.*
+!.env.example
+backend/config/.jwt-secret
+
+# User uploads and generated media (may contain private or large files)
+/storage/
+/uploads/
+
+# OS/editor and runtime artifacts
+.DS_Store
+*.log
+npm-debug.log*
+coverage/
+.vscode/
+.idea/

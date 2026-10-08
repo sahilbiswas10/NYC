@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - NYC</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/theme.js"></script>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <nav class="sticky top-0 z-50 bg-[var(--bg-color)] brutal-border border-x-0 border-t-0 px-6 py-4 flex items-center justify-between">
+        <a href="index.html" class="flex items-center gap-4 text-2xl font-black uppercase tracking-tighter hover:opacity-80 transition-opacity text-[var(--foreground)]">
+            <svg width="35" height="35" viewBox="0 0 100 100" class="animate-[spin_10s_linear_infinite] overflow-visible">
+                <rect x="0" y="0" width="100" height="100" fill="var(--primary)" stroke="var(--foreground)" stroke-width="8"/>
+                <text x="50" y="65" font-family="monospace" font-size="40" font-weight="900" text-anchor="middle" fill="var(--foreground)">NYC</text>
+            </svg>
+            <span>NOT YOUR COLLEGE</span>
+        </a>
+        <div class="flex items-center gap-6 font-bold" id="nav-links">
+            <button id="theme-toggle" class="p-2 brutal-border bg-[var(--bg-color)] text-[var(--foreground)] hover:bg-[var(--primary)] transition-colors shadow-[2px_2px_0px_0px_var(--foreground)]"><i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i><i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i></button>
+            
+        </div>
+    </nav>
+
+    <main class="flex-grow w-full max-w-4xl mx-auto px-6 py-12 relative z-10">
+        <div class="mb-12">
+            <a href="index.html" class="inline-flex items-center gap-2 font-black uppercase text-[var(--foreground)] hover:text-[var(--primary)] transition-colors mb-6">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i> Back
+            </a>
+            <h1 class="text-5xl md:text-6xl font-black uppercase tracking-tighter text-[var(--foreground)] text-shadow-brutal">MY PROFILE</h1>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <!-- Update Profile Form -->
+            <div class="bg-[var(--bg-color)] brutal-border brutal-shadow p-8">
+                <h2 class="text-3xl font-black uppercase mb-6 tracking-tight text-[var(--foreground)] border-l-8 border-[var(--primary)] pl-4">Personal Info</h2>
+                <form id="profile-form" class="space-y-6">
+                    <div id="profile-success" class="hidden bg-green-500 text-black p-4 brutal-border font-bold uppercase"></div>
+                    <div id="profile-error" class="hidden bg-red-500 text-black p-4 brutal-border font-bold uppercase"></div>
+                    
+                    <div>
+                        <label class="block text-xl font-black uppercase mb-2 text-[var(--foreground)]">Email Address</label>
+                        <input type="email" id="email" disabled class="w-full bg-black/10 dark:bg-white/10 text-[var(--foreground)] p-4 font-bold text-lg brutal-border cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-xl font-black uppercase mb-2 text-[var(--foreground)]">Full Name</label>
+                        <input type="text" id="name" required class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-4 font-bold text-lg brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)]">
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-[var(--primary)] text-black brutal-border px-8 py-4 font-black uppercase text-xl brutal-shadow hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[10px_10px_0px_0px_var(--foreground)] transition-all">
+                        SAVE CHANGES
+                    </button>
+                </form>
+            </div>
+
+            <!-- Change Password Form -->
+            <div class="bg-[var(--bg-color)] brutal-border brutal-shadow p-8">
+                <h2 class="text-3xl font-black uppercase mb-6 tracking-tight text-[var(--foreground)] border-l-8 border-[var(--accent)] pl-4">Security</h2>
+                <form id="password-form" class="space-y-6">
+                    <div id="pwd-success" class="hidden bg-green-500 text-black p-4 brutal-border font-bold uppercase"></div>
+                    <div id="pwd-error" class="hidden bg-red-500 text-black p-4 brutal-border font-bold uppercase"></div>
+                    
+                    <div>
+                        <label class="block text-xl font-black uppercase mb-2 text-[var(--foreground)]">Current Password</label>
+                        <div class="relative">
+                        <input type="password" id="current-password" required class="pr-12 w-full bg-[var(--bg-color)] text-[var(--foreground)] p-4 font-bold text-lg brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--accent)]">
+                        <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--foreground)] hover:text-[var(--primary)] transition-colors w-6 h-6" onclick="const input = document.getElementById('current-password'); const isPass = input.type === 'password'; input.type = isPass ? 'text' : 'password'; const eye = this.querySelector('.eye-icon'); const eyeOff = this.querySelector('.eye-off-icon'); if (isPass) { eye.classList.add('opacity-0', 'scale-50'); eye.classList.remove('opacity-100', 'scale-100'); eyeOff.classList.add('opacity-100', 'scale-100'); eyeOff.classList.remove('opacity-0', 'scale-50'); } else { eye.classList.add('opacity-100', 'scale-100'); eye.classList.remove('opacity-0', 'scale-50'); eyeOff.classList.add('opacity-0', 'scale-50'); eyeOff.classList.remove('opacity-100', 'scale-100'); }">
+                            <div class="absolute inset-0 transition-all duration-300 eye-icon opacity-100 scale-100">
+                                <i data-lucide="eye" class="w-6 h-6"></i>
+                            </div>
+                            <div class="absolute inset-0 transition-all duration-300 eye-off-icon opacity-0 scale-50">
+                                <i data-lucide="eye-off" class="w-6 h-6"></i>
+                            </div>
+                        </button>
+                    </div>
+                    </div>
+                    <div>
+                        <label class="block text-xl font-black uppercase mb-2 text-[var(--foreground)]">New Password</label>
+                        <div class="relative">
+                        <input type="password" id="new-password" required class="pr-12 w-full bg-[var(--bg-color)] text-[var(--foreground)] p-4 font-bold text-lg brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--accent)]">
+                        <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--foreground)] hover:text-[var(--primary)] transition-colors w-6 h-6" onclick="const input = document.getElementById('new-password'); const isPass = input.type === 'password'; input.type = isPass ? 'text' : 'password'; const eye = this.querySelector('.eye-icon'); const eyeOff = this.querySelector('.eye-off-icon'); if (isPass) { eye.classList.add('opacity-0', 'scale-50'); eye.classList.remove('opacity-100', 'scale-100'); eyeOff.classList.add('opacity-100', 'scale-100'); eyeOff.classList.remove('opacity-0', 'scale-50'); } else { eye.classList.add('opacity-100', 'scale-100'); eye.classList.remove('opacity-0', 'scale-50'); eyeOff.classList.add('opacity-0', 'scale-50'); eyeOff.classList.remove('opacity-100', 'scale-100'); }">
+                            <div class="absolute inset-0 transition-all duration-300 eye-icon opacity-100 scale-100">
+                                <i data-lucide="eye" class="w-6 h-6"></i>
+                            </div>
+                            <div class="absolute inset-0 transition-all duration-300 eye-off-icon opacity-0 scale-50">
+                                <i data-lucide="eye-off" class="w-6 h-6"></i>
+                            </div>
+                        </button>
+                    </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-[var(--accent)] text-white brutal-border px-8 py-4 font-black uppercase text-xl brutal-shadow hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[10px_10px_0px_0px_var(--foreground)] transition-all">
+                        UPDATE PASSWORD
+                    </button>
+                    <button type="button" id="profile-logout-btn" class="w-full mt-4 bg-[var(--bg-color)] text-[var(--accent)] brutal-border px-8 py-4 font-black uppercase text-lg brutal-shadow hover:bg-[var(--accent)] hover:text-white">
+                        LOG OUT
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            
+            if (!token || !userStr) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            const user = JSON.parse(userStr);
+            document.getElementById('email').value = user.email || '';
+            document.getElementById('name').value = user.name || '';
+            
+
+            
+            const showMsg = (elId, msg) => {
+                const el = document.getElementById(elId);
+                el.textContent = msg;
+                el.classList.remove('hidden');
+                setTimeout(() => el.classList.add('hidden'), 5000);
+            };
+            
+            document.getElementById('profile-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('name').value;
+                try {
+                    const res = await window.api.auth.updateProfile({ name });
+                    localStorage.setItem('user', JSON.stringify(res.data));
+                    showMsg('profile-success', 'Profile updated successfully!');
+                } catch(err) {
+                    showMsg('profile-error', err.message);
+                }
+            });
+            
+            document.getElementById('password-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const currentPassword = document.getElementById('current-password').value;
+                const newPassword = document.getElementById('new-password').value;
+                try {
+                    await window.api.auth.updatePassword({ currentPassword, newPassword });
+                    document.getElementById('password-form').reset();
+                    showMsg('pwd-success', 'Password changed successfully!');
+                } catch(err) {
+                    showMsg('pwd-error', err.message);
+                }
+            });
+
+            document.getElementById('profile-logout-btn').addEventListener('click', async () => {
+                try { await window.api.auth.logout(); } catch (error) {}
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.replace('index.html');
+            });
+        });
+    </script>
+<script src="js/navbar.js"></script>
+</body>
+</html>

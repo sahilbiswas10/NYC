@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Course - NYC</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/theme.js"></script>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <nav class="sticky top-0 z-50 bg-[var(--bg-color)] brutal-border border-x-0 border-t-0 px-6 py-4 flex items-center justify-between">
+        <a href="../index.html" class="flex items-center gap-4 text-2xl font-black uppercase tracking-tighter hover:opacity-80 transition-opacity text-[var(--foreground)]">
+            <svg width="35" height="35" viewBox="0 0 100 100" class="overflow-visible">
+                <rect x="0" y="0" width="100" height="100" fill="var(--primary)" stroke="var(--foreground)" stroke-width="8"/>
+                <text x="50" y="65" font-family="monospace" font-size="40" font-weight="900" text-anchor="middle" fill="var(--foreground)">NYC</text>
+            </svg>
+            <span>NOT YOUR COLLEGE</span>
+        </a>
+        <div class="flex items-center gap-6 font-bold" id="nav-links">
+            <button id="theme-toggle" class="p-2 brutal-border bg-[var(--bg-color)] text-[var(--foreground)] hover:bg-[var(--primary)] transition-colors shadow-[2px_2px_0px_0px_var(--foreground)]"><i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i><i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i></button>
+            
+            <a href="dashboard.html" class="uppercase hover:text-[var(--primary)] transition-colors">Admin Dashboard</a>
+            
+        </div>
+    </nav>
+
+    <main class="flex-grow w-full max-w-7xl mx-auto px-6 py-12 relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <!-- Left Column: Course Details -->
+        <div class="lg:col-span-1 space-y-8">
+            <div class="bg-[var(--bg-color)] p-6 brutal-border brutal-shadow">
+                <h2 class="text-3xl font-black uppercase mb-6 border-b-4 border-[var(--foreground)] pb-2">Course Details</h2>
+                <form id="course-details-form" class="space-y-4">
+                    <div id="course-error-msg" class="hidden bg-red-500 text-white p-4 font-bold brutal-border"></div>
+
+                    <div class="bg-[var(--bg-color)] brutal-border p-4">
+                        <label for="course-icon-file" class="block font-black uppercase mb-2">Course Icon / Image</label>
+                        <input id="course-icon-file" type="file" accept="image/jpeg,image/png,image/webp" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 font-bold brutal-border">
+                        <div class="flex items-center gap-4 mt-4">
+                            <img id="course-icon-preview" class="hidden w-24 h-24 object-cover brutal-border" alt="Course image preview">
+                            <button id="upload-course-icon" type="button" class="bg-[var(--primary)] text-black brutal-border px-4 py-2 font-black uppercase">UPLOAD IMAGE</button>
+                        </div>
+                        <p id="course-icon-status" class="font-bold text-sm mt-3" aria-live="polite">Displayed above the course name in the catalog.</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block font-black uppercase mb-1">Title</label>
+                        <input type="text" id="title" required class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 font-bold brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)]">
+                    </div>
+                    <div>
+                        <label class="block font-black uppercase mb-1">Description</label>
+                        <textarea id="description" required rows="4" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 font-bold brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)]"></textarea>
+                    </div>
+                    <div>
+                        <label class="block font-black uppercase mb-1" for="price">Course Price (INR)</label>
+                        <input type="number" id="price" min="0" step="0.01" value="0" required class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 font-bold brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)]">
+                        <p class="font-bold text-sm mt-2">Enter 0 for a free course.</p>
+                    </div>
+                    <div>
+                        <label class="block font-black uppercase mb-1">Skills Gained (comma separated)</label>
+                        <input type="text" id="objectives" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 font-bold brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)]" placeholder="React, Node.js, System Design">
+                    </div>
+                    <div>
+                        <label class="block font-black uppercase mb-1" for="instructor-profile">Public Instructor</label>
+                        <select id="instructor-profile" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 font-bold brutal-border"><option value="">No public instructor</option></select>
+                    </div>
+                    <div>
+                        <label class="block font-black uppercase mb-1">Demo Video</label>
+                        <div class="flex items-center gap-4">
+                            <button type="button" onclick="openCourseUploadModal()" class="bg-[var(--bg-color)] text-[var(--foreground)] brutal-border px-4 py-2 font-black uppercase hover:bg-[var(--accent)] hover:text-white transition-colors flex items-center gap-2"><i data-lucide="upload" class="w-4 h-4"></i> Upload Demo</button>
+                            <span id="demo-video-status" class="font-bold text-sm text-gray-500">No demo uploaded</span>
+                        </div>
+                        <button type="button" id="remove-demo-btn" class="hidden mt-3 bg-[var(--bg-color)] text-[var(--foreground)] brutal-border px-3 py-1 font-black uppercase text-xs brutal-shadow hover:bg-[var(--accent)] hover:text-white">REMOVE DEMO</button>
+                    </div>
+                    <div>
+                        <label class="block font-black uppercase mb-1">Status</label>
+                        <select id="status" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 font-bold brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)]">
+                            <option value="draft">DRAFT</option>
+                            <option value="published">PUBLISHED</option>
+                            <option value="unpublished">UNPUBLISHED</option>
+                            <option value="archived">ARCHIVED</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-[var(--primary)] text-black brutal-border py-3 font-black uppercase text-xl brutal-shadow hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_0px_var(--foreground)] transition-all mt-4">
+                        SAVE COURSE
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Column: Curriculum Builder -->
+        <div class="lg:col-span-2 min-w-0">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="text-4xl font-black uppercase text-shadow-brutal">Curriculum Builder</h2>
+                    <a id="preview-course-link" href="#" class="font-black uppercase text-[var(--accent)] hover:underline">PREVIEW COURSE</a>
+                </div>
+                <button id="add-module-btn" class="bg-[var(--accent)] text-white brutal-border px-4 py-2 font-black uppercase brutal-shadow hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_0px_var(--foreground)] transition-all flex items-center gap-2">
+                    <i data-lucide="plus" class="w-5 h-5"></i> ADD MODULE
+                </button>
+            </div>
+
+            <div id="modules-container" class="space-y-8 min-w-0">
+                <!-- Modules will be loaded here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <!-- New Module Modal -->
+    <div id="new-module-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-[var(--bg-color)] p-8 brutal-border brutal-shadow max-w-lg w-full">
+            <h3 class="text-3xl font-black uppercase mb-6">New Module</h3>
+            <form id="new-module-form" class="space-y-4">
+                <input type="hidden" id="module-edit-id">
+                <div>
+                    <label class="block font-black uppercase mb-1">Module Title</label>
+                    <input type="text" id="module-title" required class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 font-bold brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)]">
+                </div>
+                <div>
+                    <label class="block font-black uppercase mb-1">Description</label>
+                    <textarea id="module-description" rows="3" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 font-bold brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)]"></textarea>
+                </div>
+                <div class="flex gap-4 mt-6">
+                    <button type="button" id="new-module-cancel" class="flex-1 bg-[var(--bg-color)] text-[var(--foreground)] brutal-border py-3 font-black uppercase">CANCEL</button>
+                    <button type="submit" class="flex-1 bg-[var(--primary)] text-black brutal-border py-3 font-black uppercase">ADD</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- New Lesson Modal -->
+    <div id="new-lesson-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-[var(--bg-color)] p-8 brutal-border brutal-shadow max-w-lg w-full">
+            <h3 class="text-3xl font-black uppercase mb-6">New Lesson</h3>
+            <form id="new-lesson-form" class="space-y-4">
+                <input type="hidden" id="lesson-module-id">
+                <input type="hidden" id="lesson-edit-id">
+                <div>
+                    <label class="block font-black uppercase mb-1">Lesson Title</label>
+                    <input type="text" id="lesson-title" required class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 font-bold brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)]">
+                </div>
+                <div>
+                    <label class="block font-black uppercase mb-1">Type</label>
+                    <select id="lesson-type" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 font-bold brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)]">
+                        <option value="video">Video</option>
+                        <option value="audio">Audio</option>
+                        <option value="text">Text</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-black uppercase mb-1">Description</label>
+                    <textarea id="lesson-description" rows="2" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 font-bold brutal-border"></textarea>
+                </div>
+                <div id="lesson-content-wrap" class="hidden">
+                    <label class="block font-black uppercase mb-1">Lesson Content</label>
+                    <textarea id="lesson-content" rows="5" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 font-bold brutal-border"></textarea>
+                </div>
+                <div class="flex gap-4 mt-6">
+                    <button type="button" id="new-lesson-cancel" class="flex-1 bg-[var(--bg-color)] text-[var(--foreground)] brutal-border py-3 font-black uppercase">CANCEL</button>
+                    <button type="submit" class="flex-1 bg-[var(--accent)] text-white brutal-border py-3 font-black uppercase">ADD</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Upload Media Modal -->
+    <div id="upload-media-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-[var(--bg-color)] p-8 brutal-border brutal-shadow max-w-lg w-full">
+            <h3 class="text-3xl font-black uppercase mb-6">Upload Media</h3>
+            <form id="upload-media-form" class="space-y-4">
+                <input type="hidden" id="upload-module-id">
+                <input type="hidden" id="upload-lesson-id">
+                <input type="hidden" id="upload-target-type" value="lesson">
+                <div id="upload-status" class="hidden font-bold mb-4 p-4 brutal-border bg-yellow-400 text-black"></div>
+                <div>
+                    <label class="block font-black uppercase mb-1">Upload a New File</label>
+                    <input type="file" id="media-file" required accept="video/mp4,video/quicktime,video/webm,video/x-matroska,audio/mpeg,audio/wav,audio/aac" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 font-bold brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)]">
+                </div>
+                <div class="border-t-4 border-[var(--foreground)] pt-4">
+                    <label for="existing-media-select" class="block font-black uppercase mb-2">Or Choose Ready Media</label>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <select id="existing-media-select" class="min-w-0 flex-1 bg-[var(--bg-color)] text-[var(--foreground)] p-3 font-bold brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)]">
+                            <option value="">Loading your media…</option>
+                        </select>
+                        <button type="button" id="choose-existing-media" class="bg-[var(--accent)] text-white brutal-border px-4 py-3 font-black uppercase">USE SELECTED</button>
+                    </div>
+                    <p class="text-sm font-bold mt-2">Only ready media of the matching type can be selected.</p>
+                </div>
+                <div class="flex gap-4 mt-6">
+                    <button type="button" id="close-upload-modal" class="flex-1 bg-[var(--bg-color)] text-[var(--foreground)] brutal-border py-3 font-black uppercase">CLOSE</button>
+                    <button type="submit" id="upload-submit-btn" class="flex-1 bg-[var(--primary)] text-black brutal-border py-3 font-black uppercase">UPLOAD</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="course-save-toast" class="course-save-toast hidden" role="status" aria-live="polite"></div>
+    <script src="../js/api.js"></script>
+    <script src="../js/course-builder.js"></script>
+<script src="../js/navbar.js"></script>
+</body>
+</html>

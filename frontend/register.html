@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - NYC</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/theme.js"></script>
+
+    <script>
+        const existingToken = localStorage.getItem('token');
+        const existingUser = localStorage.getItem('user');
+        if (existingToken && existingUser) {
+            try {
+                const user = JSON.parse(existingUser);
+                let dashLink = 'student/dashboard.html';
+                if (user.role === 'instructor') dashLink = 'instructor/dashboard.html';
+                else if (user.role === 'admin') dashLink = 'admin/dashboard.html';
+                window.location.href = dashLink;
+            } catch(e) {}
+        }
+    </script>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 bg-[var(--bg-color)] brutal-border border-x-0 border-t-0 px-6 py-4 flex items-center justify-between">
+        <a href="index.html" class="flex items-center gap-4 text-2xl font-black uppercase tracking-tighter hover:opacity-80 transition-opacity text-[var(--foreground)]">
+            <svg width="35" height="35" viewBox="0 0 100 100" class="animate-[spin_10s_linear_infinite] overflow-visible">
+                <rect x="0" y="0" width="100" height="100" fill="var(--primary)" stroke="var(--foreground)" stroke-width="8"/>
+                <text x="50" y="65" font-family="monospace" font-size="40" font-weight="900" text-anchor="middle" fill="var(--foreground)">NYC</text>
+            </svg>
+            <span>NOT YOUR COLLEGE</span>
+        </a>
+        <div class="flex items-center gap-6 font-bold" id="nav-links"></div>
+    </nav>
+
+    <main class="flex-grow flex items-center justify-center p-6 py-20 relative z-10">
+        <div class="bg-[var(--bg-color)] brutal-border p-10 w-full max-w-md brutal-shadow-lg relative">
+            <a href="index.html" class="absolute top-4 right-4 p-2 text-[var(--foreground)] border-2 border-transparent hover:border-black dark:hover:border-white hover:bg-[var(--accent)] transition-all">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </a>
+            
+            <h2 class="text-4xl font-black uppercase tracking-tighter mb-8 text-[var(--foreground)]">JOIN NYC</h2>
+            
+            <form id="register-form" class="space-y-6">
+                <p id="register-error" class="hidden bg-red-500 text-white brutal-border p-4 font-black" role="alert" aria-live="assertive"></p>
+                <div>
+                    <label class="block text-lg font-black uppercase text-[var(--foreground)] mb-2">Full Name</label>
+                    <input type="text" id="name" class="w-full bg-[var(--bg-color)] brutal-border p-4 text-[var(--foreground)] placeholder-gray-500 font-bold focus:outline-none focus:ring-4 focus:ring-[var(--primary)] brutal-shadow transition-all" placeholder="John Doe" required>
+                </div>
+                <div>
+                    <label class="block text-lg font-black uppercase text-[var(--foreground)] mb-2">Email Address</label>
+                    <input type="email" id="email" class="w-full bg-[var(--bg-color)] brutal-border p-4 text-[var(--foreground)] placeholder-gray-500 font-bold focus:outline-none focus:ring-4 focus:ring-[var(--primary)] brutal-shadow transition-all" placeholder="you@example.com" required>
+                </div>
+                <div>
+                    <label class="block text-lg font-black uppercase text-[var(--foreground)] mb-2">Password</label>
+                    <div class="relative">
+                        <input type="password" id="password" minlength="8" autocomplete="new-password" aria-describedby="password-requirement" class="pr-12 w-full bg-[var(--bg-color)] brutal-border p-4 text-[var(--foreground)] placeholder-gray-500 font-bold focus:outline-none focus:ring-4 focus:ring-[var(--primary)] brutal-shadow transition-all" placeholder="At least 8 characters" required>
+                        <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--foreground)] hover:text-[var(--primary)] transition-colors w-6 h-6" onclick="const input = document.getElementById('password'); const isPass = input.type === 'password'; input.type = isPass ? 'text' : 'password'; const eye = this.querySelector('.eye-icon'); const eyeOff = this.querySelector('.eye-off-icon'); if (isPass) { eye.classList.add('opacity-0', 'scale-50'); eye.classList.remove('opacity-100', 'scale-100'); eyeOff.classList.add('opacity-100', 'scale-100'); eyeOff.classList.remove('opacity-0', 'scale-50'); } else { eye.classList.add('opacity-100', 'scale-100'); eye.classList.remove('opacity-0', 'scale-50'); eyeOff.classList.add('opacity-0', 'scale-50'); eyeOff.classList.remove('opacity-100', 'scale-100'); }">
+                            <div class="absolute inset-0 transition-all duration-300 eye-icon opacity-100 scale-100">
+                                <i data-lucide="eye" class="w-6 h-6"></i>
+                            </div>
+                            <div class="absolute inset-0 transition-all duration-300 eye-off-icon opacity-0 scale-50">
+                                <i data-lucide="eye-off" class="w-6 h-6"></i>
+                            </div>
+                        </button>
+                    </div>
+                    <p id="password-requirement" class="mt-2 text-sm font-bold">Use at least 8 characters.</p>
+                </div>
+                <button type="submit" class="w-full bg-[var(--accent)] text-white font-black uppercase text-2xl brutal-border py-4 mt-4 brutal-shadow hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[10px_10px_0px_0px_var(--foreground)] transition-all">
+                    Register
+                </button>
+            </form>
+            
+            <p class="mt-8 text-center text-lg font-bold text-[var(--foreground)] uppercase">
+                ALREADY HAVE AN ACCOUNT? <a href="login.html" class="text-[var(--primary)] hover:underline">Login</a>
+            </p>
+        </div>
+    </main>
+    
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/navbar.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

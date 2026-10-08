@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor Dashboard - NYC</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script><script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../css/style.css"><script src="../js/theme.js"></script>
+</head>
+<body class="flex flex-col min-h-screen">
+    <nav class="sticky top-0 z-50 bg-[var(--bg-color)] brutal-border border-x-0 border-t-0 px-6 py-4 flex items-center justify-between">
+        <a href="../index.html" class="flex items-center gap-4 text-2xl font-black uppercase tracking-tighter text-[var(--foreground)]"><strong class="bg-[var(--primary)] text-black brutal-border px-2">NYC</strong><span>NOT YOUR COLLEGE</span></a>
+        <div class="flex items-center gap-5 font-bold" id="nav-links"><a href="courses.html" class="uppercase hover:text-[var(--primary)]">My Courses</a><a href="../profile.html" class="uppercase hover:text-[var(--primary)]">Profile</a></div>
+    </nav>
+    <main class="flex-grow w-full max-w-7xl mx-auto px-6 py-12 relative z-10">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+            <div><span class="bg-[var(--primary)] text-black px-3 py-1 text-sm font-black uppercase brutal-border inline-block mb-4">Instructor</span><h1 class="text-5xl md:text-6xl font-black uppercase tracking-tighter text-[var(--foreground)] text-shadow-brutal">COURSE STUDIO</h1><p id="instructor-greeting" class="text-xl font-bold mt-3"></p></div>
+            <a href="create-course.html" class="bg-[var(--primary)] text-black brutal-border px-8 py-3 font-black uppercase text-xl brutal-shadow hover:-translate-y-1 hover:-translate-x-1 transition-all">+ CREATE COURSE</a>
+        </div>
+        <section id="instructor-stats" class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10"></section>
+        <section class="bg-[var(--bg-color)] brutal-border brutal-shadow p-6 md:p-8">
+            <div class="flex items-end justify-between gap-4 mb-6"><h2 class="text-3xl font-black uppercase">Your Courses</h2><a href="courses.html" class="font-black uppercase text-[var(--accent)] hover:underline">VIEW ALL</a></div>
+            <div id="instructor-course-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"><p class="font-bold">Loading your courses…</p></div>
+        </section>
+    </main>
+    <script src="../js/api.js"></script><script src="../js/instructor.js"></script><script src="../js/navbar.js"></script>
+</body>
+</html>

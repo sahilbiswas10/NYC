@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - NYC</title><script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script><script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../css/style.css"><script src="../js/theme.js"></script>
+</head>
+<body class="flex flex-col min-h-screen">
+    <nav class="sticky top-0 z-50 bg-[var(--bg-color)] brutal-border border-x-0 border-t-0 px-6 py-4 flex items-center justify-between">
+        <a href="../index.html" class="flex items-center gap-4 text-2xl font-black uppercase tracking-tighter text-[var(--foreground)]"><strong class="bg-[var(--primary)] text-black brutal-border px-2">NYC</strong><span>NOT YOUR COLLEGE</span></a>
+        <div class="flex items-center gap-5 font-bold" id="nav-links"><a href="dashboard.html" class="uppercase hover:text-[var(--primary)]">Admin Dashboard</a><a href="courses.html" class="uppercase hover:text-[var(--primary)]">Courses</a></div>
+    </nav>
+    <main class="flex-grow w-full max-w-7xl mx-auto px-6 py-12 relative z-10">
+        <div class="mb-10"><span class="bg-[var(--accent)] text-white px-3 py-1 text-sm font-black uppercase brutal-border inline-block mb-4">Administrator</span><h1 class="text-5xl md:text-6xl font-black uppercase tracking-tighter text-[var(--foreground)] text-shadow-brutal">USER MANAGEMENT</h1><p class="font-bold text-lg mt-3">Edit account details or remove user accounts. Public instructor profiles are managed from the dashboard.</p></div>
+        <div id="user-error" class="hidden bg-red-500 text-white brutal-border p-4 font-bold mb-6"></div>
+        <section class="bg-[var(--bg-color)] brutal-border brutal-shadow p-6 md:p-8 overflow-x-auto">
+            <table class="w-full min-w-[850px] text-left font-bold"><thead class="border-b-4 border-[var(--foreground)]"><tr><th class="py-4 px-3 uppercase">Name</th><th class="py-4 px-3 uppercase">Email</th><th class="py-4 px-3 uppercase">Role</th><th class="py-4 px-3 uppercase">Joined</th><th class="py-4 px-3 uppercase text-right">Actions</th></tr></thead><tbody id="users-table"><tr><td colspan="5" class="py-8 text-center">Loading accounts…</td></tr></tbody></table>
+        </section>
+    </main>
+    <div id="edit-user-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-[var(--bg-color)] text-[var(--foreground)] p-8 brutal-border brutal-shadow max-w-lg w-full">
+            <h2 class="text-3xl font-black uppercase mb-6">Edit user</h2>
+            <form id="edit-user-form" class="space-y-4">
+                <input type="hidden" id="edit-user-id">
+                <label class="block font-black uppercase">Name<input id="edit-user-name" required maxlength="100" class="mt-2 w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 brutal-border"></label>
+                <label class="block font-black uppercase">Email<input id="edit-user-email" type="email" required class="mt-2 w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 brutal-border"></label>
+                <div class="flex gap-4"><button type="button" id="cancel-edit-user" class="flex-1 bg-[var(--bg-color)] text-[var(--foreground)] brutal-border py-3 font-black uppercase">CANCEL</button><button type="submit" class="flex-1 bg-[var(--primary)] text-black brutal-border py-3 font-black uppercase">SAVE</button></div>
+            </form>
+        </div>
+    </div>
+    <script src="../js/api.js"></script><script src="../js/admin-users.js"></script><script src="../js/navbar.js"></script>
+</body>
+</html>

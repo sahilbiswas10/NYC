@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYC</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/theme.js"></script>
+</head>
+<body class="flex flex-col min-h-screen">
+    <nav class="sticky top-0 z-50 bg-[var(--bg-color)] brutal-border border-x-0 border-t-0 px-6 py-4 flex items-center justify-between">
+        <a href="index.html" class="flex items-center gap-4 text-2xl font-black uppercase tracking-tighter hover:opacity-80 transition-opacity text-[var(--foreground)]">
+            <svg width="35" height="35" viewBox="0 0 100 100" class="animate-[spin_10s_linear_infinite] overflow-visible">
+                <rect x="0" y="0" width="100" height="100" fill="var(--primary)" stroke="var(--foreground)" stroke-width="8"/>
+                <text x="50" y="65" font-family="monospace" font-size="40" font-weight="900" text-anchor="middle" fill="var(--foreground)">NYC</text>
+            </svg>
+            <span>NOT YOUR COLLEGE</span>
+        </a>
+        <div class="flex items-center gap-6 font-bold" id="nav-links"></div>
+    </nav>
+
+    <main class="flex-grow w-full max-w-7xl mx-auto px-6 py-12 relative z-10">
+        <a href="courses.html" class="inline-flex items-center gap-2 font-black uppercase mb-8 text-[var(--foreground)] hover:text-[var(--primary)]">
+            <i data-lucide="arrow-left" class="w-5 h-5"></i> All Courses
+        </a>
+        <div id="course-error" class="hidden bg-red-500 text-white p-5 font-black uppercase brutal-border brutal-shadow mb-8"></div>
+
+        <section class="space-y-8">
+            <header>
+                <span class="bg-[var(--accent)] text-white px-3 py-1 text-sm font-black uppercase brutal-border inline-block brutal-shadow mb-5">Course Overview</span>
+                <h1 id="course-title" class="course-detail-title text-3xl md:text-4xl font-black uppercase tracking-tight text-[var(--foreground)] text-shadow-brutal">Loading course...</h1>
+            </header>
+
+            <div class="bg-[var(--bg-color)] brutal-border brutal-shadow p-3 md:p-5">
+                <h2 class="font-black uppercase text-xl px-3 py-2">Course Preview</h2>
+                <div class="bg-black aspect-video flex items-center justify-center">
+                    <video id="course-demo" class="w-full h-full object-contain" controls controlsList="nodownload" playsinline></video>
+                </div>
+                <p id="demo-status" class="font-bold p-3">Loading preview...</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-[var(--bg-color)] brutal-border brutal-shadow p-6">
+                        <h2 class="text-2xl font-black uppercase mb-3">About This Course</h2>
+                        <p id="course-description" class="course-copy text-base md:text-lg font-bold"></p>
+                    </div>
+                    <div id="skills-panel" class="bg-[var(--primary)] text-black brutal-border brutal-shadow p-6 hidden">
+                        <h2 class="text-2xl font-black uppercase mb-4">Skills Gained</h2>
+                        <ul id="course-objectives" class="list-disc pl-6 space-y-2 text-lg font-bold"></ul>
+                    </div>
+                </div>
+                <aside class="space-y-6">
+                    <div id="course-instructor"></div>
+                    <div id="course-price" class="course-price-badge hidden" aria-label="Course price"></div>
+                    <div id="course-enrollment-card" class="hidden bg-[var(--bg-color)] brutal-border brutal-shadow p-6">
+                        <div id="enrollment-panel" class="space-y-4">
+                            <p id="enrollment-message" class="font-bold text-lg">Sign in and enroll to view course modules and lessons.</p>
+                            <a id="login-enroll-link" href="login.html" class="hidden w-full text-center bg-[var(--accent)] text-white brutal-border py-3 px-4 font-black uppercase text-xl brutal-shadow hover:bg-black transition-colors">LOGIN TO ENROLL</a>
+                            <button id="enroll-button" class="hidden w-full bg-[var(--primary)] text-black brutal-border py-3 px-4 font-black uppercase text-xl brutal-shadow hover:-translate-y-1 hover:-translate-x-1 transition-all">ENROLL IN COURSE</button>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section id="course-content-area" class="hidden mt-16">
+            <div id="course-content-tabs" class="hidden course-content-tabs mb-8" role="tablist" aria-label="Course content">
+                <button id="curriculum-tab" type="button" role="tab" aria-controls="curriculum-section" aria-selected="true" data-course-tab="curriculum" class="course-content-tab is-active">Curriculum</button>
+                <button id="discussion-tab" type="button" role="tab" aria-controls="discussion-section" aria-selected="false" data-course-tab="discussion" class="course-content-tab">Discussion</button>
+            </div>
+        <section id="curriculum-section" role="tabpanel" aria-labelledby="curriculum-tab" class="hidden">
+            <div class="flex items-end justify-between mb-8">
+                <div>
+                    <span class="bg-[var(--primary)] text-black px-3 py-1 text-sm font-black uppercase brutal-border inline-block mb-4">Enrolled</span>
+                    <h2 class="text-4xl md:text-5xl font-black uppercase tracking-tighter text-[var(--foreground)] text-shadow-brutal">Course Content</h2>
+                </div>
+            </div>
+            <div id="course-curriculum" class="space-y-8"></div>
+        </section>
+        <section id="discussion-section" role="tabpanel" aria-labelledby="discussion-tab" class="hidden">
+            <div class="bg-[var(--bg-color)] brutal-border brutal-shadow p-6 md:p-8">
+                <div class="mb-6 border-b-4 border-[var(--foreground)] pb-4">
+                    <h2 id="discussion-heading" class="text-3xl font-black uppercase">Course Discussion</h2>
+                    <p class="mt-2 font-bold">Ask questions, share ideas, and reply to other students in this course.</p>
+                </div>
+                <form id="discussion-form" class="space-y-3 mb-8">
+                    <p id="discussion-replying-to" class="hidden font-black text-sm text-[var(--accent)]"></p>
+                    <label class="sr-only" for="discussion-message">Write a discussion post</label>
+                    <textarea id="discussion-message" maxlength="3000" rows="4" required placeholder="Share a question or insight..." class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-4 font-bold brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)]"></textarea>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button id="discussion-submit" type="submit" class="bg-[var(--primary)] text-black brutal-border px-6 py-3 font-black uppercase brutal-shadow">Post to discussion</button>
+                        <button id="discussion-cancel-reply" type="button" class="hidden bg-[var(--bg-color)] text-[var(--foreground)] brutal-border px-5 py-3 font-black uppercase">Cancel reply</button>
+                        <span id="discussion-status" class="font-bold" role="status" aria-live="polite"></span>
+                    </div>
+                </form>
+                <div id="discussion-list" class="space-y-5" aria-live="polite"></div>
+            </div>
+        </section>
+        </section>
+    </main>
+
+    <footer class="w-full bg-[var(--bg-color)] brutal-border border-x-0 border-b-0 py-8 px-6 mt-auto">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="text-xl font-black uppercase tracking-tighter">© 2026 NOT YOUR COLLEGE</div>
+            <div class="flex items-center gap-6">
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram" class="social-link p-3 brutal-border bg-[var(--bg-color)] text-[var(--foreground)] hover:bg-[var(--primary)] hover:-translate-y-1 hover:-translate-x-1 transition-transform brutal-shadow"><svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="18" cy="6" r=".8" fill="currentColor" stroke="none"></circle></svg></a>
+                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube" title="YouTube" class="social-link p-3 brutal-border bg-[var(--bg-color)] text-[var(--foreground)] hover:bg-[var(--accent)] hover:-translate-y-1 hover:-translate-x-1 transition-transform brutal-shadow"><svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12s0-3.2-.4-4.7a2.8 2.8 0 0 0-2-2C17.9 4.8 12 4.8 12 4.8s-5.9 0-7.6.5a2.8 2.8 0 0 0-2 2C2 8.8 2 12 2 12s0 3.2.4 4.7a2.8 2.8 0 0 0 2 2c1.7.5 7.6.5 7.6.5s5.9 0 7.6-.5a2.8 2.8 0 0 0 2-2C22 15.2 22 12 22 12Z"></path><path d="m10 15 5-3-5-3z" fill="currentColor" stroke="none"></path></svg></a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script src="js/navbar.js"></script>
+    <script src="js/streaming.js"></script>
+    <script src="js/course.js"></script>
+    <script src="js/course-discussion.js"></script>
+</body>
+</html>

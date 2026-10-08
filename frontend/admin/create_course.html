@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Course - NYC</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/theme.js"></script>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <nav class="sticky top-0 z-50 bg-[var(--bg-color)] brutal-border border-x-0 border-t-0 px-6 py-4 flex items-center justify-between">
+        <a href="../index.html" class="flex items-center gap-4 text-2xl font-black uppercase tracking-tighter hover:opacity-80 transition-opacity text-[var(--foreground)]">
+            <svg width="35" height="35" viewBox="0 0 100 100" class="overflow-visible">
+                <rect x="0" y="0" width="100" height="100" fill="var(--primary)" stroke="var(--foreground)" stroke-width="8"/>
+                <text x="50" y="65" font-family="monospace" font-size="40" font-weight="900" text-anchor="middle" fill="var(--foreground)">NYC</text>
+            </svg>
+            <span>NOT YOUR COLLEGE</span>
+        </a>
+        <div class="flex items-center gap-6 font-bold" id="nav-links">
+            <button id="theme-toggle" class="p-2 brutal-border bg-[var(--bg-color)] text-[var(--foreground)] hover:bg-[var(--primary)] transition-colors shadow-[2px_2px_0px_0px_var(--foreground)]"><i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i><i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i></button>
+            
+            <a href="dashboard.html" class="uppercase hover:text-[var(--primary)] transition-colors">Admin Dashboard</a>
+            
+        </div>
+    </nav>
+
+    <main class="flex-grow w-full max-w-4xl mx-auto px-6 py-12 relative z-10">
+        <div class="mb-12">
+            <h1 class="text-5xl md:text-6xl font-black uppercase tracking-tighter text-[var(--foreground)] text-shadow-brutal mb-4">CREATE COURSE</h1>
+            <p class="text-xl font-bold">Start building a new program.</p>
+        </div>
+        
+        <form id="create-course-form" class="space-y-8 bg-[var(--bg-color)] p-8 brutal-border brutal-shadow">
+            <div id="error-msg" class="hidden bg-red-500 text-white p-4 font-bold brutal-border"></div>
+
+            <div>
+                <label for="course-icon" class="block text-2xl font-black uppercase mb-2">Course Icon / Image</label>
+                <input type="file" id="course-icon" accept="image/jpeg,image/png,image/webp" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-4 font-bold brutal-border">
+                <p class="font-bold text-sm mt-2">Optional JPG, PNG, or WebP image up to 5 MB. It appears above the course name in the catalog.</p>
+                <img id="course-icon-preview" class="hidden mt-4 w-32 h-32 object-cover brutal-border brutal-shadow" alt="Course image preview">
+            </div>
+            
+            <div>
+                <label class="block text-2xl font-black uppercase mb-2">Course Title</label>
+                <input type="text" id="title" required class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-4 font-bold text-xl brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)] placeholder-gray-500" placeholder="e.g. ADVANCED SYSTEM DESIGN">
+            </div>
+
+            <div>
+                <label class="block text-2xl font-black uppercase mb-2">Short Description</label>
+                <textarea id="description" required rows="3" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-4 font-bold text-lg brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)] placeholder-gray-500" placeholder="A brief overview of the course..."></textarea>
+            </div>
+
+            <div>
+                <label for="price" class="block text-2xl font-black uppercase mb-2">Course Price (INR)</label>
+                <input type="number" id="price" min="0" step="0.01" value="0" required class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-4 font-bold text-lg brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)]">
+                <p class="font-bold text-sm mt-2">Enter 0 for a free course.</p>
+            </div>
+
+            <div>
+                <label class="block text-2xl font-black uppercase mb-2">Skills Gained</label>
+                <input type="text" id="objectives" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-4 font-bold text-lg brutal-border focus:outline-none focus:ring-4 focus:ring-[var(--primary)]" placeholder="Separate skills with commas">
+            </div>
+            <div>
+                <label for="instructor-profile" class="block text-2xl font-black uppercase mb-2">Instructor</label>
+                <select id="instructor-profile" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-4 font-bold text-lg brutal-border"><option value="">Choose an instructor profile</option></select>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-lg font-black uppercase mb-2">Category</label>
+                    <input type="text" id="category" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-4 font-bold brutal-border" placeholder="Technology">
+                </div>
+                <div>
+                    <label class="block text-lg font-black uppercase mb-2">Level</label>
+                    <select id="level" class="w-full bg-[var(--bg-color)] text-[var(--foreground)] p-4 font-bold brutal-border">
+                        <option value="">Choose level</option><option>Beginner</option><option>Intermediate</option><option>Advanced</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex gap-4">
+                <button type="submit" class="flex-1 bg-[var(--primary)] text-black brutal-border py-4 font-black uppercase text-2xl brutal-shadow hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[8px_8px_0px_0px_var(--foreground)] transition-all">
+                    SAVE & CONTINUE
+                </button>
+                <a href="dashboard.html" class="bg-[var(--bg-color)] text-[var(--foreground)] brutal-border py-4 px-8 font-black uppercase text-2xl brutal-shadow hover:bg-gray-300 transition-colors text-center">
+                    CANCEL
+                </a>
+            </div>
+        </form>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            lucide.createIcons();
+            const courseIcon = document.getElementById('course-icon');
+            const courseIconPreview = document.getElementById('course-icon-preview');
+            courseIcon.addEventListener('change', () => {
+                const file = courseIcon.files?.[0];
+                if (!file) { courseIconPreview.classList.add('hidden'); return; }
+                courseIconPreview.src = URL.createObjectURL(file);
+                courseIconPreview.classList.remove('hidden');
+            });
+            const instructorSelect = document.getElementById('instructor-profile');
+            try {
+                const profiles = await window.api.instructors.getAll();
+                for (const profile of profiles.data) {
+                    const option = document.createElement('option'); option.value = profile._id; option.textContent = profile.name;
+                    instructorSelect.appendChild(option);
+                }
+            } catch (error) {
+                instructorSelect.innerHTML = '<option value="">Instructor list unavailable</option>';
+            }
+
+
+
+            document.getElementById('create-course-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const title = document.getElementById('title').value;
+                const description = document.getElementById('description').value;
+                const objectives = document.getElementById('objectives').value.split(',').map(value => value.trim()).filter(Boolean);
+                const errorMsg = document.getElementById('error-msg');
+                let createdCourseId;
+                try {
+                    const res = await window.api.courses.create({
+                        title,
+                        shortDescription: description,
+                        description,
+                        price: Number(document.getElementById('price').value),
+                        objectives,
+                        instructorProfile: instructorSelect.value || null,
+                        category: document.getElementById('category').value.trim(),
+                        level: document.getElementById('level').value,
+                        status: 'draft'
+                    });
+                    createdCourseId = res.data._id;
+                    if (courseIcon.files?.[0]) await window.api.courses.uploadThumbnail(createdCourseId, courseIcon.files[0]);
+                    window.location.href = `edit_course.html?id=${createdCourseId}`;
+                } catch(err) {
+                    if (createdCourseId) {
+                        window.location.href = `edit_course.html?id=${createdCourseId}&imageUpload=failed`;
+                        return;
+                    }
+                    errorMsg.textContent = err.message;
+                    errorMsg.classList.remove('hidden');
+                }
+            });
+        });
+    </script>
+<script src="../js/navbar.js"></script>
+</body>
+</html>
