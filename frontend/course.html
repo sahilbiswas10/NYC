@@ -29,8 +29,15 @@
             <i data-lucide="arrow-left" class="w-5 h-5"></i> All Courses
         </a>
         <div id="course-error" class="hidden bg-red-500 text-white p-5 font-black uppercase brutal-border brutal-shadow mb-8"></div>
+        <p id="course-view-loading" class="hidden mb-8 bg-[var(--primary)] p-4 font-black uppercase brutal-border brutal-shadow" role="status" aria-live="polite">Opening your course curriculum…</p>
 
-        <section class="space-y-8">
+        <div id="course-content-tabs" class="hidden course-content-tabs mb-8" role="tablist" aria-label="Course sections">
+            <button id="course-preview-tab" type="button" role="tab" aria-controls="course-overview-section course-reviews" aria-selected="false" data-course-tab="preview" class="course-content-tab">Course Preview &amp; Reviews</button>
+            <button id="curriculum-tab" type="button" role="tab" aria-controls="curriculum-section" aria-selected="true" data-course-tab="curriculum" class="course-content-tab is-active">Curriculum</button>
+            <button id="discussion-tab" type="button" role="tab" aria-controls="discussion-section" aria-selected="false" data-course-tab="discussion" class="course-content-tab">Discussion</button>
+        </div>
+
+        <section id="course-overview-section" class="space-y-8">
             <header>
                 <span class="bg-[var(--accent)] text-white px-3 py-1 text-sm font-black uppercase brutal-border inline-block brutal-shadow mb-5">Course Overview</span>
                 <h1 id="course-title" class="course-detail-title text-3xl md:text-4xl font-black uppercase tracking-tight text-[var(--foreground)] text-shadow-brutal">Loading course...</h1>
@@ -70,16 +77,13 @@
         </section>
 
         <section id="course-content-area" class="hidden mt-16">
-            <div id="course-content-tabs" class="hidden course-content-tabs mb-8" role="tablist" aria-label="Course content">
-                <button id="curriculum-tab" type="button" role="tab" aria-controls="curriculum-section" aria-selected="true" data-course-tab="curriculum" class="course-content-tab is-active">Curriculum</button>
-                <button id="discussion-tab" type="button" role="tab" aria-controls="discussion-section" aria-selected="false" data-course-tab="discussion" class="course-content-tab">Discussion</button>
-            </div>
         <section id="curriculum-section" role="tabpanel" aria-labelledby="curriculum-tab" class="hidden">
-            <div class="flex items-end justify-between mb-8">
+            <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
                 <div>
                     <span class="bg-[var(--primary)] text-black px-3 py-1 text-sm font-black uppercase brutal-border inline-block mb-4">Enrolled</span>
-                    <h2 class="text-4xl md:text-5xl font-black uppercase tracking-tighter text-[var(--foreground)] text-shadow-brutal">Course Content</h2>
+                    <h2 class="text-2xl md:text-3xl font-black uppercase tracking-tight text-[var(--foreground)] text-shadow-brutal">Course Content</h2>
                 </div>
+                <p id="course-completion-state" class="hidden course-completion-banner" role="status"><i data-lucide="circle-check-big" aria-hidden="true"></i> Course completed</p>
             </div>
             <div id="course-curriculum" class="space-y-8"></div>
         </section>
@@ -103,6 +107,44 @@
             </div>
         </section>
         </section>
+
+        <section id="course-reviews" class="course-reviews-panel mt-16" aria-labelledby="course-reviews-heading">
+            <div class="course-reviews-header">
+                <div>
+                    <span class="course-reviews-kicker">Student feedback</span>
+                    <h2 id="course-reviews-heading" class="text-3xl md:text-4xl font-black uppercase tracking-tight">Course reviews</h2>
+                </div>
+                <p id="course-rating-summary" class="course-rating-summary" aria-live="polite">Loading ratings…</p>
+            </div>
+            <div id="course-review-access" class="course-review-access" role="status">
+                <span id="course-review-access-text">Enroll in this course to leave a review.</span>
+                <a id="course-review-login" class="hidden font-black underline" href="login.html">Sign in</a>
+            </div>
+            <form id="course-review-form" class="course-review-form hidden">
+                <h3 id="course-review-form-heading" class="text-xl font-black uppercase">Leave a review</h3>
+                <label class="course-filter-field" for="course-review-rating">
+                    <span>Your rating</span>
+                    <select id="course-review-rating" class="course-filter-select" required>
+                        <option value="5">5 stars · Excellent</option>
+                        <option value="4">4 stars · Very good</option>
+                        <option value="3">3 stars · Good</option>
+                        <option value="2">2 stars · Needs work</option>
+                        <option value="1">1 star · Poor</option>
+                    </select>
+                </label>
+                <label class="course-filter-field" for="course-review-comment">
+                    <span>Your feedback</span>
+                    <textarea id="course-review-comment" maxlength="2000" rows="4" required placeholder="What did you learn? What could be better?"></textarea>
+                </label>
+                <div class="flex flex-wrap items-center gap-4">
+                    <button id="course-review-submit" type="submit" class="course-review-submit">Submit review</button>
+                    <span id="course-review-status" class="font-bold" role="status" aria-live="polite"></span>
+                </div>
+            </form>
+            <div id="course-review-list" class="course-review-list" aria-live="polite">
+                <p class="course-review-empty">Loading student feedback…</p>
+            </div>
+        </section>
     </main>
 
     <footer class="w-full bg-[var(--bg-color)] brutal-border border-x-0 border-b-0 py-8 px-6 mt-auto">
@@ -120,5 +162,6 @@
     <script src="js/streaming.js"></script>
     <script src="js/course.js"></script>
     <script src="js/course-discussion.js"></script>
+    <script src="js/course-reviews.js"></script>
 </body>
 </html>

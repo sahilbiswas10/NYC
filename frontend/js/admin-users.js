@@ -26,10 +26,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('edit-user-id').value = account._id;
                 document.getElementById('edit-user-name').value = account.name;
                 document.getElementById('edit-user-email').value = account.email;
+                const role = document.getElementById('edit-user-role');
+                role.value = account.role;
+                role.disabled = account.role === 'admin';
                 modal.classList.remove('hidden');
             });
             const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'bg-[var(--accent)] text-white brutal-border px-3 py-2 text-xs font-black uppercase';
-            remove.textContent = account._id === currentUserId ? 'CURRENT ACCOUNT' : 'DELETE'; remove.disabled = account._id === currentUserId;
+            remove.textContent = account.role === 'admin' ? 'DEPLOYMENT MANAGED' : account._id === currentUserId ? 'CURRENT ACCOUNT' : 'DELETE';
+            remove.disabled = account.role === 'admin' || account._id === currentUserId;
             remove.addEventListener('click', async () => {
                 if (!confirm(`Permanently delete ${account.name}'s account, enrollments, progress, and uploaded media? Courses they own will transfer to your admin account. Courses using their uploaded media will be unpublished.`)) return;
                 remove.disabled = true;
@@ -45,10 +49,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         event.preventDefault();
         const submit = editForm.querySelector('[type="submit"]'); submit.disabled = true;
         try {
-            await window.api.admin.updateUser(document.getElementById('edit-user-id').value, {
+            const role = document.getElementById('edit-user-role');
+            const userData = {
                 name: document.getElementById('edit-user-name').value.trim(),
                 email: document.getElementById('edit-user-email').value.trim()
-            });
+            };
+            if (!role.disabled) userData.role = role.value;
+            await window.api.admin.updateUser(document.getElementById('edit-user-id').value, userData);
             modal.classList.add('hidden'); errorBox.classList.add('hidden'); await loadUsers();
         } catch (error) { showError(error.message); }
         finally { submit.disabled = false; }

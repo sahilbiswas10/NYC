@@ -15,6 +15,30 @@ const findStudentEnrollment = (studentId, courseId) => Enrollment.findOne({
     status: { $in: ['active', 'completed'] }
 });
 
+router.get('/courses/:courseId/progress', protect, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.courseId)) return res.status(404).json({ success: false, error: 'Course not found' });
+        if (req.user.role !== 'student') return res.status(403).json({ success: false, error: 'Student access required' });
+        const enrollment = await findStudentEnrollment(req.user.id, req.params.courseId);
+        if (!enrollment) return res.status(403).json({ success: false, error: 'Enroll in this course to view lesson progress' });
+        await recalculateEnrollment(enrollment);
+        const completedLessonIds = await LessonProgress.find({
+            student: req.user.id,
+            course: req.params.courseId,
+            completed: true
+        }).distinct('lesson');
+        res.json({
+            success: true,
+            data: {
+                completedLessonIds: completedLessonIds.map(String),
+                courseCompleted: enrollment.status === 'completed'
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Unable to load course progress' });
+    }
+});
+
 router.put('/lessons/:lessonId/progress', protect, async (req, res) => {
     try {
         if (!mongoose.isValidObjectId(req.params.lessonId)) return res.status(404).json({ success: false, error: 'Lesson not found' });
@@ -43,11 +67,6 @@ router.put('/lessons/:lessonId/progress', protect, async (req, res) => {
             },
             { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
         );
-        if (percentage >= 90 && !progress.completed) {
-            progress.completed = true;
-            await progress.save();
-        }
-
         enrollment.lastAccessedLesson = lesson._id;
         enrollment.lastAccessedAt = new Date();
         await enrollment.save();
@@ -63,12 +82,24 @@ router.post('/lessons/:lessonId/complete', protect, async (req, res) => {
         if (!mongoose.isValidObjectId(req.params.lessonId)) return res.status(404).json({ success: false, error: 'Lesson not found' });
         const lesson = await Lesson.findById(req.params.lessonId);
         if (!lesson) return res.status(404).json({ success: false, error: 'Lesson not found' });
-        if (!['text', 'document'].includes(lesson.type)) return res.status(400).json({ success: false, error: 'Use playback progress to complete a media lesson' });
         const enrollment = await findStudentEnrollment(req.user.id, lesson.course);
         if (!enrollment) return res.status(403).json({ success: false, error: 'Not enrolled in course' });
+        let currentTime = 0;
+        let duration = 0;
+        if (['video', 'audio'].includes(lesson.type)) {
+            if (!lesson.media) return res.status(400).json({ success: false, error: 'This lesson does not have playable media' });
+            const media = await Media.findById(lesson.media).select('duration processingStatus');
+            if (!media || media.processingStatus !== 'ready') return res.status(409).json({ success: false, error: 'Lesson media is not ready' });
+            const clientDuration = Number(req.body.duration);
+            duration = media.duration > 0 ? media.duration : (lesson.duration > 0 ? lesson.duration : clientDuration);
+            if (!Number.isFinite(duration) || duration <= 0) return res.status(409).json({ success: false, error: 'Lesson duration is unavailable' });
+            currentTime = duration;
+        } else if (!['text', 'document'].includes(lesson.type)) {
+            return res.status(400).json({ success: false, error: 'This lesson type cannot be completed' });
+        }
         const progress = await LessonProgress.findOneAndUpdate(
             { student: req.user.id, lesson: lesson._id },
-            { $set: { course: lesson.course, module: lesson.module, currentTime: 0, duration: 0, percentage: 100, completed: true, lastWatchedAt: new Date() } },
+            { $set: { course: lesson.course, module: lesson.module, currentTime, duration, percentage: 100, completed: true, lastWatchedAt: new Date() } },
             { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
         );
         enrollment.lastAccessedLesson = lesson._id;

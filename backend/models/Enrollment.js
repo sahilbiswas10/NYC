@@ -7,7 +7,11 @@ const EnrollmentSchema = new mongoose.Schema({
     progress: { type: Number, default: 0 },
     lastAccessedLesson: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' },
     lastAccessedAt: Date,
-    completedAt: Date
+    completedAt: Date,
+    certificateId: { type: String, unique: true, sparse: true },
+    certificateIssuedAt: Date,
+    certificateStudentName: String,
+    certificateCourseTitle: String
 }, { timestamps: true });
 
 EnrollmentSchema.index({ student: 1, course: 1 }, { unique: true });

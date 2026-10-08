@@ -12,9 +12,18 @@ const grantPaidEnrollment = async (paymentOrder, paymentId) => {
     let enrollment = await Enrollment.findOne({ student: paymentOrder.student, course: paymentOrder.course });
     let changed = false;
     if (enrollment?.status === 'cancelled') {
+        // Do not let a retried capture webhook silently restore an enrollment
+        // that an administrator has already revoked.
+        if (paymentOrder.enrollmentGranted) return enrollment;
         enrollment.status = 'active';
         enrollment.progress = 0;
         enrollment.completedAt = undefined;
+        enrollment.lastAccessedLesson = undefined;
+        enrollment.lastAccessedAt = undefined;
+        enrollment.certificateId = undefined;
+        enrollment.certificateIssuedAt = undefined;
+        enrollment.certificateStudentName = undefined;
+        enrollment.certificateCourseTitle = undefined;
         enrollment = await enrollment.save();
         changed = true;
     } else if (!enrollment) {

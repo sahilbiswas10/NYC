@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment History - NYC</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script><script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../css/style.css"><script src="../js/theme.js"></script>
+</head>
+<body class="flex flex-col min-h-screen">
+    <nav class="sticky top-0 z-50 bg-[var(--bg-color)] brutal-border border-x-0 border-t-0 px-6 py-4 flex items-center justify-between">
+        <a href="../index.html" class="flex items-center gap-4 text-2xl font-black uppercase tracking-tighter text-[var(--foreground)]"><strong class="bg-[var(--primary)] text-black brutal-border px-2">NYC</strong><span>NOT YOUR COLLEGE</span></a>
+        <div class="flex items-center gap-5 font-bold" id="nav-links"></div>
+    </nav>
+    <main class="flex-grow w-full max-w-7xl mx-auto px-6 py-12 relative z-10">
+        <header class="mb-8">
+            <span class="bg-[var(--accent)] text-white px-3 py-1 text-sm font-black uppercase brutal-border inline-block mb-4">Administrator</span>
+            <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter text-[var(--foreground)] text-shadow-brutal">PAYMENT HISTORY</h1>
+            <p class="font-bold mt-3">Captured orders remain as financial records. Refunds must be handled in the payment provider dashboard.</p>
+        </header>
+        <div id="payment-error" class="hidden bg-red-500 text-white brutal-border p-4 font-bold mb-6" role="alert"></div>
+        <p id="payment-status" class="font-bold mb-4" role="status">Loading payments…</p>
+        <section class="bg-[var(--bg-color)] brutal-border brutal-shadow p-5 md:p-7 overflow-x-auto">
+            <table class="w-full min-w-[1050px] text-left font-bold">
+                <thead class="border-b-4 border-[var(--foreground)]"><tr><th class="py-3 px-3 uppercase">Student</th><th class="py-3 px-3 uppercase">Course</th><th class="py-3 px-3 uppercase">Amount</th><th class="py-3 px-3 uppercase">Payment status</th><th class="py-3 px-3 uppercase">Course access</th><th class="py-3 px-3 uppercase">Provider IDs</th><th class="py-3 px-3 uppercase">Created</th></tr></thead>
+                <tbody id="payments-table"><tr><td colspan="7" class="py-8 text-center">Loading payments…</td></tr></tbody>
+            </table>
+        </section>
+        <div class="flex items-center justify-center gap-4 mt-6">
+            <button id="payments-prev" type="button" class="bg-[var(--bg-color)] text-[var(--foreground)] brutal-border px-4 py-2 font-black uppercase">Previous</button>
+            <span id="payments-page" class="font-black">Page 1 of 1</span>
+            <button id="payments-next" type="button" class="bg-[var(--bg-color)] text-[var(--foreground)] brutal-border px-4 py-2 font-black uppercase">Next</button>
+        </div>
+    </main>
+    <script src="../js/api.js"></script><script src="../js/admin-payments.js"></script><script src="../js/navbar.js"></script>
+</body>
+</html>

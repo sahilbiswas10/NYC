@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#090914">
+    <title>Certificate of Completion - NYC</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/theme.js"></script>
+</head>
+<body class="certificate-page">
+    <header class="certificate-toolbar">
+        <a href="student/dashboard.html" class="certificate-toolbar-link">← MY DASHBOARD</a>
+        <button id="print-certificate" class="certificate-print-button hidden" type="button">PRINT / SAVE AS PDF</button>
+    </header>
+
+    <main class="certificate-main">
+        <p id="certificate-error" class="certificate-error hidden" role="alert"></p>
+        <div id="certificate-loading" class="certificate-loading" role="status">Loading your certificate…</div>
+
+        <article id="certificate-sheet" class="certificate-sheet hidden" aria-labelledby="certificate-heading">
+            <div class="certificate-frame">
+                <div class="certificate-brand">
+                    <span class="certificate-mark" aria-hidden="true">NYC</span>
+                    <span>NOT YOUR COLLEGE</span>
+                </div>
+                <p class="certificate-kicker">LEARNING ACHIEVEMENT</p>
+                <h1 id="certificate-heading">Certificate<br>of Completion</h1>
+                <p class="certificate-awarded">This certificate is proudly awarded to</p>
+                <h2 id="certificate-student" class="certificate-student"></h2>
+                <div class="certificate-rule" aria-hidden="true"></div>
+                <p class="certificate-for">for successfully completing</p>
+                <h3 id="certificate-course" class="certificate-course"></h3>
+                <p class="certificate-message">In recognition of the time, focus, and commitment invested in learning.</p>
+                <div class="certificate-details">
+                    <div><span>ISSUED</span><time id="certificate-date"></time></div>
+                    <div><span>CERTIFICATE ID</span><strong id="certificate-id"></strong></div>
+                    <div class="certificate-qr"><canvas id="certificate-qr-canvas" width="128" height="128" aria-label="QR code to verify this certificate"></canvas><span>SCAN TO VERIFY</span></div>
+                    <div class="certificate-signature"><span>NYC</span><strong>LEARNING TEAM</strong></div>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+    <script src="js/certificate.js"></script>
+</body>
+</html>

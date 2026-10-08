@@ -3,6 +3,9 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Enrollment = require('../models/Enrollment');
 const LessonProgress = require('../models/LessonProgress');
+const CourseReview = require('../models/CourseReview');
+const DiscussionPost = require('../models/DiscussionPost');
+const PaymentOrder = require('../models/PaymentOrder');
 const Lesson = require('../models/Lesson');
 const Course = require('../models/Course');
 const Media = require('../models/Media');
@@ -13,6 +16,11 @@ const { cleanupMedia } = require('../utils/mediaCleanup');
 const { cancelMediaProcessing } = require('../utils/queueManager');
 
 const router = express.Router();
+const getPage = (value) => {
+    const page = Number.parseInt(value, 10);
+    return Number.isInteger(page) && page > 0 ? page : 1;
+};
+const ADMIN_PAGE_SIZE = 50;
 
 router.get('/users', protect, authorize('admin'), async (_req, res) => {
     try {
@@ -38,7 +46,8 @@ router.put('/users/:id', protect, authorize('admin'), async (req, res) => {
             user.email = email;
         }
         if (Object.hasOwn(req.body, 'role')) {
-            if (!['student', 'instructor', 'admin'].includes(req.body.role)) return res.status(400).json({ success: false, error: 'Choose a valid account role' });
+            if (!['student', 'instructor'].includes(req.body.role)) return res.status(400).json({ success: false, error: 'Choose a student or instructor role' });
+            if (user.role === 'admin') return res.status(403).json({ success: false, error: 'Administrator roles are managed through the trusted deployment process' });
             if (String(user._id) === String(req.user.id) && req.body.role !== user.role) return res.status(400).json({ success: false, error: 'You cannot change your own role' });
             user.role = req.body.role;
         }
@@ -55,6 +64,7 @@ router.delete('/users/:id', protect, authorize('admin'), async (req, res) => {
         if (String(req.params.id) === String(req.user.id)) return res.status(400).json({ success: false, error: 'You cannot delete your own account' });
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+        if (user.role === 'admin') return res.status(403).json({ success: false, error: 'Administrator accounts are managed through the trusted deployment process' });
         const enrolledCourses = await Enrollment.aggregate([
             { $match: { student: user._id, status: { $in: ['active', 'completed'] } } },
             { $group: { _id: '$course', count: { $sum: 1 } } }
@@ -90,9 +100,12 @@ router.delete('/users/:id', protect, authorize('admin'), async (req, res) => {
             }
         }
 
+        const authoredThreads = await DiscussionPost.find({ author: user._id, parent: null }).distinct('_id');
         await Promise.all([
             Enrollment.deleteMany({ student: user._id }),
             LessonProgress.deleteMany({ student: user._id }),
+            CourseReview.deleteMany({ student: user._id }),
+            DiscussionPost.deleteMany({ $or: [{ author: user._id }, { parent: { $in: authoredThreads } }] }),
             Course.updateMany({ instructor: user._id }, { $set: { instructor: req.user.id } }),
             ...enrolledCourses.map(({ _id, count }) => Course.updateOne(
                 { _id },
@@ -104,6 +117,127 @@ router.delete('/users/:id', protect, authorize('admin'), async (req, res) => {
     } catch (error) {
         console.error('Unable to delete user and related data:', error.message);
         res.status(500).json({ success: false, error: 'Unable to delete user' });
+    }
+});
+
+router.get('/enrollments', protect, authorize('admin'), async (req, res) => {
+    try {
+        const page = getPage(req.query.page);
+        const [enrollments, total] = await Promise.all([
+            Enrollment.find({}).sort('-updatedAt').skip((page - 1) * ADMIN_PAGE_SIZE).limit(ADMIN_PAGE_SIZE)
+                .populate('student', 'name email').populate('course', 'title status').lean(),
+            Enrollment.countDocuments({})
+        ]);
+        res.json({ success: true, data: enrollments, pagination: { page, pageSize: ADMIN_PAGE_SIZE, total, totalPages: Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE)) } });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Unable to load enrollments' });
+    }
+});
+
+router.post('/enrollments', protect, authorize('admin'), async (req, res) => {
+    try {
+        const { studentId, courseId } = req.body || {};
+        if (!mongoose.isValidObjectId(studentId) || !mongoose.isValidObjectId(courseId)) return res.status(400).json({ success: false, error: 'Choose a valid student and course' });
+        const [student, course] = await Promise.all([
+            User.findOne({ _id: studentId, role: 'student' }).select('_id'),
+            Course.findOne({ _id: courseId, status: 'published' }).select('_id')
+        ]);
+        if (!student) return res.status(404).json({ success: false, error: 'Student account not found' });
+        if (!course) return res.status(404).json({ success: false, error: 'Published course not found' });
+
+        let enrollment = await Enrollment.findOne({ student: student._id, course: course._id });
+        if (enrollment && enrollment.status !== 'cancelled') return res.status(409).json({ success: false, error: 'This student already has access to the course' });
+        if (enrollment) {
+            await LessonProgress.deleteMany({ student: student._id, course: course._id });
+            enrollment.status = 'active';
+            enrollment.progress = 0;
+            enrollment.completedAt = undefined;
+            enrollment.lastAccessedLesson = undefined;
+            enrollment.lastAccessedAt = undefined;
+            enrollment.certificateId = undefined;
+            enrollment.certificateIssuedAt = undefined;
+            enrollment.certificateStudentName = undefined;
+            enrollment.certificateCourseTitle = undefined;
+            await enrollment.save();
+        } else {
+            enrollment = await Enrollment.create({ student: student._id, course: course._id });
+        }
+        const totalStudents = await Enrollment.countDocuments({ course: course._id, status: { $in: ['active', 'completed'] } });
+        await Course.updateOne({ _id: course._id }, { $set: { totalStudents } });
+        res.status(201).json({ success: true, data: enrollment });
+    } catch (error) {
+        if (error.code === 11000) return res.status(409).json({ success: false, error: 'This student already has access to the course' });
+        res.status(500).json({ success: false, error: 'Unable to grant course access' });
+    }
+});
+
+router.put('/enrollments/:id', protect, authorize('admin'), async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ success: false, error: 'Enrollment not found' });
+        const enrollment = await Enrollment.findById(req.params.id);
+        if (!enrollment) return res.status(404).json({ success: false, error: 'Enrollment not found' });
+        const action = req.body?.action;
+        if (!['revoke', 'restore', 'reset-progress'].includes(action)) return res.status(400).json({ success: false, error: 'Choose revoke, restore, or reset-progress' });
+
+        if (action === 'restore') {
+            if (enrollment.status !== 'cancelled') return res.status(409).json({ success: false, error: 'This enrollment is already active' });
+            if (!(await Course.exists({ _id: enrollment.course, status: 'published' }))) return res.status(409).json({ success: false, error: 'Publish this course before restoring access' });
+            await LessonProgress.deleteMany({ student: enrollment.student, course: enrollment.course });
+            enrollment.status = 'active';
+            enrollment.progress = 0;
+            enrollment.completedAt = undefined;
+            enrollment.lastAccessedLesson = undefined;
+            enrollment.lastAccessedAt = undefined;
+            enrollment.certificateId = undefined;
+            enrollment.certificateIssuedAt = undefined;
+            enrollment.certificateStudentName = undefined;
+            enrollment.certificateCourseTitle = undefined;
+        } else if (action === 'revoke') {
+            if (enrollment.status === 'cancelled') return res.status(409).json({ success: false, error: 'This enrollment is already revoked' });
+            await LessonProgress.deleteMany({ student: enrollment.student, course: enrollment.course });
+            enrollment.status = 'cancelled';
+            enrollment.progress = 0;
+            enrollment.completedAt = undefined;
+            enrollment.lastAccessedLesson = undefined;
+            enrollment.lastAccessedAt = undefined;
+            enrollment.certificateId = undefined;
+            enrollment.certificateIssuedAt = undefined;
+            enrollment.certificateStudentName = undefined;
+            enrollment.certificateCourseTitle = undefined;
+        } else {
+            if (enrollment.status === 'cancelled') return res.status(409).json({ success: false, error: 'Restore access before resetting progress' });
+            await LessonProgress.deleteMany({ student: enrollment.student, course: enrollment.course });
+            enrollment.status = 'active';
+            enrollment.progress = 0;
+            enrollment.completedAt = undefined;
+            enrollment.lastAccessedLesson = undefined;
+            enrollment.lastAccessedAt = undefined;
+            enrollment.certificateId = undefined;
+            enrollment.certificateIssuedAt = undefined;
+            enrollment.certificateStudentName = undefined;
+            enrollment.certificateCourseTitle = undefined;
+        }
+
+        await enrollment.save();
+        const totalStudents = await Enrollment.countDocuments({ course: enrollment.course, status: { $in: ['active', 'completed'] } });
+        await Course.updateOne({ _id: enrollment.course }, { $set: { totalStudents } });
+        res.json({ success: true, data: enrollment });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Unable to update enrollment' });
+    }
+});
+
+router.get('/payments', protect, authorize('admin'), async (req, res) => {
+    try {
+        const page = getPage(req.query.page);
+        const [payments, total] = await Promise.all([
+            PaymentOrder.find({}).sort('-createdAt').skip((page - 1) * ADMIN_PAGE_SIZE).limit(ADMIN_PAGE_SIZE)
+                .populate('student', 'name email').populate('course', 'title').lean(),
+            PaymentOrder.countDocuments({})
+        ]);
+        res.json({ success: true, data: payments, pagination: { page, pageSize: ADMIN_PAGE_SIZE, total, totalPages: Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE)) } });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Unable to load payment records' });
     }
 });
 
@@ -119,6 +253,58 @@ router.get('/instructors', protect, authorize('admin'), instructorController.lis
 router.post('/instructors', protect, authorize('admin'), handleInstructorPhoto, instructorController.createInstructor);
 router.put('/instructors/:id', protect, authorize('admin'), handleInstructorPhoto, instructorController.updateInstructor);
 router.delete('/instructors/:id', protect, authorize('admin'), instructorController.deleteInstructor);
+
+router.get('/community/discussions', protect, authorize('admin'), async (req, res) => {
+    try {
+        const page = getPage(req.query.page);
+        const [discussions, total] = await Promise.all([
+            DiscussionPost.find({}).sort('-createdAt').skip((page - 1) * ADMIN_PAGE_SIZE).limit(ADMIN_PAGE_SIZE)
+                .populate('author', 'name').populate('course', 'title').lean(),
+            DiscussionPost.countDocuments({})
+        ]);
+        res.json({ success: true, data: discussions, pagination: { page, pageSize: ADMIN_PAGE_SIZE, total, totalPages: Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE)) } });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Unable to load discussion posts' });
+    }
+});
+
+router.delete('/community/discussions/:id', protect, authorize('admin'), async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ success: false, error: 'Discussion post not found' });
+        const post = await DiscussionPost.findById(req.params.id).select('_id parent');
+        if (!post) return res.status(404).json({ success: false, error: 'Discussion post not found' });
+        if (post.parent) await post.deleteOne();
+        else await DiscussionPost.deleteMany({ $or: [{ _id: post._id }, { parent: post._id }] });
+        res.json({ success: true, data: {} });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Unable to delete discussion post' });
+    }
+});
+
+router.get('/community/reviews', protect, authorize('admin'), async (req, res) => {
+    try {
+        const page = getPage(req.query.page);
+        const [reviews, total] = await Promise.all([
+            CourseReview.find({}).sort('-createdAt').skip((page - 1) * ADMIN_PAGE_SIZE).limit(ADMIN_PAGE_SIZE)
+                .populate('student', 'name').populate('course', 'title').lean(),
+            CourseReview.countDocuments({})
+        ]);
+        res.json({ success: true, data: reviews, pagination: { page, pageSize: ADMIN_PAGE_SIZE, total, totalPages: Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE)) } });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Unable to load course reviews' });
+    }
+});
+
+router.delete('/community/reviews/:id', protect, authorize('admin'), async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ success: false, error: 'Course review not found' });
+        const result = await CourseReview.deleteOne({ _id: req.params.id });
+        if (!result.deletedCount) return res.status(404).json({ success: false, error: 'Course review not found' });
+        res.json({ success: true, data: {} });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Unable to delete course review' });
+    }
+});
 
 router.put('/users/:id/role', protect, authorize('admin'), async (req, res) => {
     try {

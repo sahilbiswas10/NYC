@@ -38,6 +38,8 @@ app.get('/favicon.ico', (_req, res) => {
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/certificates', require('./routes/certificateRoutes'));
+app.use('/api/courses', require('./routes/reviewRoutes'));
 app.use('/api/courses', require('./routes/courseRoutes'));
 app.use('/api/courses', require('./routes/discussionRoutes'));
 app.use('/api/courses/:courseId/modules', require('./routes/moduleRoutes'));

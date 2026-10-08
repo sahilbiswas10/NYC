@@ -58,6 +58,7 @@ router.post('/verify', protect, async (req, res) => {
         if (!record) return res.status(404).json({ success: false, error: 'Payment order not found' });
         if (record.status === 'captured' && record.razorpayPaymentId === paymentId) {
             const enrollment = await grantPaidEnrollment(record, paymentId);
+            if (enrollment.status === 'cancelled') return res.status(403).json({ success: false, error: 'This enrollment was revoked by an administrator. Contact the course administrator about your access.' });
             return res.json({ success: true, data: { enrollment, status: 'captured' } });
         }
         if (!razorpayConfigured()) return res.status(503).json({ success: false, error: 'Payments are not configured yet.' });
@@ -79,6 +80,7 @@ router.post('/verify', protect, async (req, res) => {
         if (!payment.captured || payment.status !== 'captured') return res.status(202).json({ success: true, data: { status: 'processing' }, message: 'Payment is processing. Access will be enabled once it is captured.' });
 
         const enrollment = await grantPaidEnrollment(record, payment.id);
+        if (enrollment.status === 'cancelled') return res.status(403).json({ success: false, error: 'This enrollment was revoked by an administrator. Contact the course administrator about your access.' });
         res.json({ success: true, data: { enrollment, status: 'captured' } });
     } catch (error) {
         console.error('Payment verification error:', error.message);

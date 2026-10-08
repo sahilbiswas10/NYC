@@ -36,6 +36,7 @@ CourseSchema.pre('deleteOne', { document: true, query: false }, async function()
     const Enrollment = require('./Enrollment');
     const DiscussionPost = require('./DiscussionPost');
     const LessonProgress = require('./LessonProgress');
+    const CourseReview = require('./CourseReview');
     
     // Find all lessons for this course
     const lessons = await Lesson.find({ course: this._id });
@@ -45,6 +46,7 @@ CourseSchema.pre('deleteOne', { document: true, query: false }, async function()
     await LessonProgress.deleteMany({ course: this._id });
     await Enrollment.deleteMany({ course: this._id });
     await DiscussionPost.deleteMany({ course: this._id });
+    await CourseReview.deleteMany({ course: this._id });
     await Lesson.deleteMany({ course: this._id });
     
     // Delete modules

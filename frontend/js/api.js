@@ -110,16 +110,27 @@ window.api = {
         getContinueWatching: () => apiCall('/student/continue-watching'),
         getCompletedCourses: () => apiCall('/student/completed-courses')
     },
+    progress: {
+        getCourseLessons: (courseId) => apiCall(`/courses/${encodeURIComponent(courseId)}/progress`)
+    },
     admin: {
         getCourses: () => apiCall('/courses/admin'),
         getUsers: () => apiCall('/admin/users'),
         updateUser: (id, data) => apiCall(`/admin/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
         deleteUser: (id) => apiCall(`/admin/users/${id}`, { method: 'DELETE' }),
         setRole: (id, role) => apiCall(`/admin/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role }) }),
+        getEnrollments: (page = 1) => apiCall(`/admin/enrollments?page=${encodeURIComponent(page)}`),
+        grantEnrollment: (studentId, courseId) => apiCall('/admin/enrollments', { method: 'POST', body: JSON.stringify({ studentId, courseId }) }),
+        updateEnrollment: (id, action) => apiCall(`/admin/enrollments/${id}`, { method: 'PUT', body: JSON.stringify({ action }) }),
+        getPayments: (page = 1) => apiCall(`/admin/payments?page=${encodeURIComponent(page)}`),
         getInstructors: () => apiCall('/admin/instructors'),
         createInstructor: (formData) => apiCall('/admin/instructors', { method: 'POST', body: formData }),
         updateInstructor: (id, formData) => apiCall(`/admin/instructors/${id}`, { method: 'PUT', body: formData }),
-        deleteInstructor: (id) => apiCall(`/admin/instructors/${id}`, { method: 'DELETE' })
+        deleteInstructor: (id) => apiCall(`/admin/instructors/${id}`, { method: 'DELETE' }),
+        getDiscussions: (page = 1) => apiCall(`/admin/community/discussions?page=${encodeURIComponent(page)}`),
+        deleteDiscussion: (id) => apiCall(`/admin/community/discussions/${id}`, { method: 'DELETE' }),
+        getReviews: (page = 1) => apiCall(`/admin/community/reviews?page=${encodeURIComponent(page)}`),
+        deleteReview: (id) => apiCall(`/admin/community/reviews/${id}`, { method: 'DELETE' })
     },
     instructors: {
         getAll: () => apiCall('/instructors'),
@@ -129,8 +140,16 @@ window.api = {
         createOrder: (courseId) => apiCall(`/payments/courses/${encodeURIComponent(courseId)}/order`, { method: 'POST' }),
         verify: (data) => apiCall('/payments/verify', { method: 'POST', body: JSON.stringify(data) })
     },
+    certificates: {
+        getForCourse: (courseId) => apiCall(`/courses/${encodeURIComponent(courseId)}/certificate`),
+        verify: (certificateId) => apiCall(`/certificates/verify/${encodeURIComponent(certificateId)}`)
+    },
     discussions: {
         getForCourse: (courseId) => apiCall(`/courses/${encodeURIComponent(courseId)}/discussions`),
         postToCourse: (courseId, data) => apiCall(`/courses/${encodeURIComponent(courseId)}/discussions`, { method: 'POST', body: JSON.stringify(data) })
+    },
+    reviews: {
+        getForCourse: (courseId) => apiCall(`/courses/${encodeURIComponent(courseId)}/reviews`),
+        submitForCourse: (courseId, data) => apiCall(`/courses/${encodeURIComponent(courseId)}/reviews`, { method: 'POST', body: JSON.stringify(data) })
     }
 };

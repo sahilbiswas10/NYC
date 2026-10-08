@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enrollment Management - NYC</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script><script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../css/style.css"><script src="../js/theme.js"></script>
+</head>
+<body class="flex flex-col min-h-screen">
+    <nav class="sticky top-0 z-50 bg-[var(--bg-color)] brutal-border border-x-0 border-t-0 px-6 py-4 flex items-center justify-between">
+        <a href="../index.html" class="flex items-center gap-4 text-2xl font-black uppercase tracking-tighter text-[var(--foreground)]"><strong class="bg-[var(--primary)] text-black brutal-border px-2">NYC</strong><span>NOT YOUR COLLEGE</span></a>
+        <div class="flex items-center gap-5 font-bold" id="nav-links"></div>
+    </nav>
+    <main class="flex-grow w-full max-w-7xl mx-auto px-6 py-12 relative z-10">
+        <header class="mb-8">
+            <span class="bg-[var(--accent)] text-white px-3 py-1 text-sm font-black uppercase brutal-border inline-block mb-4">Administrator</span>
+            <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter text-[var(--foreground)] text-shadow-brutal">ENROLLMENT MANAGEMENT</h1>
+            <p class="font-bold mt-3">Grant course access, revoke access, or reset saved progress and certificates.</p>
+        </header>
+        <div id="enrollment-error" class="hidden bg-red-500 text-white brutal-border p-4 font-bold mb-6" role="alert"></div>
+        <section class="bg-[var(--bg-color)] brutal-border brutal-shadow p-5 md:p-7 mb-8">
+            <h2 class="text-2xl font-black uppercase mb-2">Grant course access</h2>
+            <p class="font-bold text-sm mb-5">Admin grants are recorded as complimentary access and do not charge or refund a payment.</p>
+            <form id="grant-enrollment-form" class="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+                <label class="block font-black uppercase text-sm">Student<select id="enrollment-student" required class="mt-2 w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 brutal-border"><option value="">Loading students…</option></select></label>
+                <label class="block font-black uppercase text-sm">Published course<select id="enrollment-course" required class="mt-2 w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 brutal-border"><option value="">Loading courses…</option></select></label>
+                <button id="grant-enrollment-button" type="submit" class="bg-[var(--primary)] text-black brutal-border px-5 py-3 font-black uppercase">Grant access</button>
+            </form>
+        </section>
+        <p id="enrollment-status" class="font-bold mb-4" role="status">Loading enrollments…</p>
+        <section class="bg-[var(--bg-color)] brutal-border brutal-shadow p-5 md:p-7 overflow-x-auto">
+            <table class="w-full min-w-[1000px] text-left font-bold">
+                <thead class="border-b-4 border-[var(--foreground)]"><tr><th class="py-3 px-3 uppercase">Student</th><th class="py-3 px-3 uppercase">Course</th><th class="py-3 px-3 uppercase">Status</th><th class="py-3 px-3 uppercase">Progress</th><th class="py-3 px-3 uppercase">Updated</th><th class="py-3 px-3 uppercase text-right">Actions</th></tr></thead>
+                <tbody id="enrollments-table"><tr><td colspan="6" class="py-8 text-center">Loading enrollments…</td></tr></tbody>
+            </table>
+        </section>
+        <div class="flex items-center justify-center gap-4 mt-6">
+            <button id="enrollments-prev" type="button" class="bg-[var(--bg-color)] text-[var(--foreground)] brutal-border px-4 py-2 font-black uppercase">Previous</button>
+            <span id="enrollments-page" class="font-black">Page 1 of 1</span>
+            <button id="enrollments-next" type="button" class="bg-[var(--bg-color)] text-[var(--foreground)] brutal-border px-4 py-2 font-black uppercase">Next</button>
+        </div>
+    </main>
+    <script src="../js/api.js"></script><script src="../js/admin-enrollments.js"></script><script src="../js/navbar.js"></script>
+</body>
+</html>

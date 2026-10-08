@@ -3,8 +3,8 @@ const LessonProgress = require('../models/LessonProgress');
 const Enrollment = require('../models/Enrollment');
 
 exports.recalculateEnrollment = async (enrollment) => {
-    const required = await Lesson.find({ course: enrollment.course, isRequired: true }).select('_id');
-    if (!required.length) {
+    const lessons = await Lesson.find({ course: enrollment.course }).select('_id');
+    if (!lessons.length) {
         enrollment.progress = 0;
         enrollment.status = 'active';
         enrollment.completedAt = undefined;
@@ -14,11 +14,11 @@ exports.recalculateEnrollment = async (enrollment) => {
     const completed = await LessonProgress.countDocuments({
         student: enrollment.student,
         course: enrollment.course,
-        lesson: { $in: required.map((lesson) => lesson._id) },
+        lesson: { $in: lessons.map((lesson) => lesson._id) },
         completed: true
     });
-    enrollment.progress = Math.round((completed / required.length) * 100);
-    if (completed === required.length) {
+    enrollment.progress = Math.round((completed / lessons.length) * 100);
+    if (completed === lessons.length) {
         enrollment.status = 'completed';
         enrollment.completedAt = enrollment.completedAt || new Date();
     } else {

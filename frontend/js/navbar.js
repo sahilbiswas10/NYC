@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (user.role === 'instructor') dashLink = 'instructor/dashboard.html';
             else if (user.role === 'admin') dashLink = 'admin/dashboard.html';
             const managementLinks = user.role === 'admin'
-                ? '<a href="/admin/users.html" class="uppercase hover:text-[var(--primary)]">Users</a><a href="/admin/media.html" class="uppercase hover:text-[var(--primary)]">Media</a>'
+                ? '<a href="/admin/users.html" class="uppercase hover:text-[var(--primary)]">Users</a><a href="/admin/enrollments.html" class="uppercase hover:text-[var(--primary)]">Enrollments</a><a href="/admin/payments.html" class="uppercase hover:text-[var(--primary)]">Payments</a><a href="/admin/media.html" class="uppercase hover:text-[var(--primary)]">Media</a><a href="/admin/community.html" class="uppercase hover:text-[var(--primary)]">Community</a>'
                 : user.role === 'instructor'
                     ? '<a href="/instructor/courses.html" class="uppercase hover:text-[var(--primary)]">My Courses</a>'
                     : '';

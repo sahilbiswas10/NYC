@@ -7,39 +7,74 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const params = new URLSearchParams(window.location.search);
     const courseId = params.get('course');
+    const requestedView = params.get('view');
     const errorBox = document.getElementById('course-error');
+    const viewLoading = document.getElementById('course-view-loading');
     const enrollmentMessage = document.getElementById('enrollment-message');
     const enrollButton = document.getElementById('enroll-button');
     const loginLink = document.getElementById('login-enroll-link');
     const curriculumSection = document.getElementById('curriculum-section');
     const courseContentArea = document.getElementById('course-content-area');
     const courseContentTabs = document.getElementById('course-content-tabs');
+    const courseOverviewSection = document.getElementById('course-overview-section');
+    const courseReviewsSection = document.getElementById('course-reviews');
     const discussionSection = document.getElementById('discussion-section');
+    const notifyReviewEnrollment = () => window.dispatchEvent(new CustomEvent('course:review-access', { detail: { courseId, enrolled: true } }));
+    let courseData = null;
+    let demoLoadStarted = false;
 
-    const showEnrolledCourseTabs = () => {
-        courseContentArea?.classList.remove('hidden');
-        courseContentTabs?.classList.remove('hidden');
-        curriculumSection?.classList.remove('hidden');
-        discussionSection?.classList.add('hidden');
+    const loadDemoPreview = async () => {
+        if (!courseData || demoLoadStarted) return;
+        demoLoadStarted = true;
+        const demoStatus = document.getElementById('demo-status');
+        if (!courseData.demoVideo) {
+            demoStatus.textContent = 'No course preview is available yet.';
+            return;
+        }
+        demoStatus.textContent = 'Loading course preview...';
+        try {
+            const player = new StreamingPlayer('course-demo');
+            await player.loadManifest(courseData.demoVideo);
+            demoStatus.textContent = 'Course introduction';
+        } catch (error) {
+            demoStatus.textContent = `Preview unavailable: ${error.message}`;
+        }
+    };
+
+    if (requestedView === 'curriculum') {
+        courseOverviewSection?.classList.add('hidden');
+        courseReviewsSection?.classList.add('hidden');
+        viewLoading?.classList.remove('hidden');
+    }
+
+    const activateCourseTab = (view) => {
+        const showPreview = view === 'preview';
+        const showDiscussion = view === 'discussion';
+        if (showPreview) loadDemoPreview();
+        else document.getElementById('course-demo')?.pause();
+        courseOverviewSection?.classList.toggle('hidden', !showPreview);
+        courseReviewsSection?.classList.toggle('hidden', !showPreview);
+        courseContentArea?.classList.toggle('hidden', showPreview);
+        curriculumSection?.classList.toggle('hidden', showDiscussion || showPreview);
+        discussionSection?.classList.toggle('hidden', !showDiscussion);
         courseContentTabs?.querySelectorAll('[data-course-tab]').forEach((tab) => {
-            const active = tab.dataset.courseTab === 'curriculum';
+            const active = tab.dataset.courseTab === view;
             tab.classList.toggle('is-active', active);
             tab.setAttribute('aria-selected', String(active));
         });
+    };
+
+    const showEnrolledCourseTabs = (initialView = 'preview') => {
+        viewLoading?.classList.add('hidden');
+        courseContentTabs?.classList.remove('hidden');
+        activateCourseTab(initialView);
         window.dispatchEvent(new CustomEvent('course:enrolled', { detail: { courseId } }));
     };
 
     courseContentTabs?.addEventListener('click', (event) => {
         const tab = event.target.closest('[data-course-tab]');
         if (!tab) return;
-        const showDiscussion = tab.dataset.courseTab === 'discussion';
-        curriculumSection.classList.toggle('hidden', showDiscussion);
-        discussionSection.classList.toggle('hidden', !showDiscussion);
-        courseContentTabs.querySelectorAll('[data-course-tab]').forEach((item) => {
-            const active = item === tab;
-            item.classList.toggle('is-active', active);
-            item.setAttribute('aria-selected', String(active));
-        });
+        activateCourseTab(tab.dataset.courseTab);
     });
 
     const showError = (message) => {
@@ -48,6 +83,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     if (!courseId) {
+        viewLoading?.classList.add('hidden');
+        courseOverviewSection?.classList.remove('hidden');
+        courseReviewsSection?.classList.remove('hidden');
         showError('No course was selected.');
         return;
     }
@@ -55,11 +93,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     loginLink.href = `login.html?returnTo=${encodeURIComponent(`course.html?course=${courseId}`)}`;
 
     const loadCurriculum = async () => {
-        courseContentArea?.classList.remove('hidden');
-        curriculumSection.classList.remove('hidden');
         const container = document.getElementById('course-curriculum');
+        const completedLessonIds = new Set();
         container.textContent = 'Loading course content...';
         try {
+            let currentUser = null;
+            try { currentUser = JSON.parse(localStorage.getItem('user') || 'null'); } catch (error) {}
+            const showCompletion = currentUser?.role === 'student';
+            if (currentUser?.role === 'student') {
+                try {
+                    const progressResponse = await window.api.progress.getCourseLessons(courseId);
+                    (progressResponse.data.completedLessonIds || []).forEach((lessonId) => completedLessonIds.add(String(lessonId)));
+                } catch (error) {
+                    console.error('Unable to load lesson completion state:', error);
+                }
+            }
+
             const modulesResponse = await window.api.courses.getModules(courseId);
             if (!modulesResponse.data.length) {
                 container.textContent = 'No modules have been added to this course yet.';
@@ -67,28 +116,53 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const moduleSections = [];
+            let completedModules = 0;
             for (let moduleIndex = 0; moduleIndex < modulesResponse.data.length; moduleIndex++) {
                 const module = modulesResponse.data[moduleIndex];
                 const lessonsResponse = await window.api.modules.getLessons(module._id);
-                const lessons = lessonsResponse.data.map((lesson, lessonIndex) => `
-                    <li class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-[var(--bg-color)] brutal-border">
-                        <div>
-                            <h4 class="text-lg font-black uppercase">LESSON ${moduleIndex + 1}.${lessonIndex + 1} · ${courseHtml(lesson.title)}</h4>
-                            <p class="font-bold text-sm">${courseHtml(lesson.type)}${lesson.duration ? ` · ${Math.ceil(lesson.duration / 60)} min` : ''}</p>
-                        </div>
-                        <a href="learn.html?course=${encodeURIComponent(courseId)}&lesson=${encodeURIComponent(lesson._id)}" class="text-center bg-[var(--accent)] text-white brutal-border px-5 py-2 font-black uppercase brutal-shadow hover:bg-black transition-colors">OPEN LESSON</a>
-                    </li>
-                `).join('');
+                const lessons = lessonsResponse.data;
+                const completedCount = lessons.filter((lesson) => completedLessonIds.has(String(lesson._id))).length;
+                const isModuleComplete = lessons.length > 0 && completedCount === lessons.length;
+                if (isModuleComplete) completedModules++;
+                const completionIcon = (label) => `<span class="completion-check" role="img" aria-label="${label}"><i data-lucide="check" aria-hidden="true"></i></span>`;
+                const lessonItems = lessons.map((lesson, lessonIndex) => {
+                    const isCompleted = completedLessonIds.has(String(lesson._id));
+                    return `
+                        <li class="curriculum-lesson-row">
+                            <div class="curriculum-lesson-info">
+                                <h4 class="curriculum-lesson-title">LESSON ${moduleIndex + 1}.${lessonIndex + 1} · ${courseHtml(lesson.title)}${isCompleted ? completionIcon('Lesson completed') : ''}</h4>
+                                <p class="curriculum-lesson-meta">${courseHtml(lesson.type)}${lesson.duration ? ` · ${Math.ceil(lesson.duration / 60)} min` : ''}</p>
+                            </div>
+                            <a href="learn.html?course=${encodeURIComponent(courseId)}&lesson=${encodeURIComponent(lesson._id)}" class="curriculum-open-lesson">Open lesson</a>
+                        </li>
+                    `;
+                }).join('');
+                const moduleCompleteMark = isModuleComplete ? completionIcon('Module completed') : '';
+                const notes = module.notesOriginalFilename
+                    ? `<button type="button" data-module-notes="${module._id}" class="module-notes-link mb-4" aria-label="View notes for module ${moduleIndex + 1}"><span class="module-notes-label">MODULE ${moduleIndex + 1} NOTES</span><span class="module-notes-filename">${courseHtml(module.notesOriginalFilename)}</span><span class="module-notes-action">VIEW NOTES</span></button>`
+                    : '';
                 moduleSections.push(`
-                    <article class="bg-[var(--bg-color)] brutal-border border-l-8 ${moduleIndex % 2 ? 'border-l-[var(--accent)]' : 'border-l-[var(--primary)]'} brutal-shadow p-6">
-                        <h3 class="text-2xl font-black uppercase border-b-4 border-[var(--foreground)] pb-3 mb-4">MODULE ${moduleIndex + 1} · ${courseHtml(module.title)}</h3>
-                        ${module.description ? `<p class="module-copy font-medium text-sm mb-4">${courseHtml(module.description)}</p>` : ''}
-                        ${module.notesOriginalFilename ? `<button type="button" data-module-notes="${module._id}" class="module-notes-link mb-4" aria-label="View notes for module ${moduleIndex + 1}"><span class="module-notes-label">MODULE ${moduleIndex + 1} NOTES</span><span class="module-notes-filename">${courseHtml(module.notesOriginalFilename)}</span><span class="module-notes-action">VIEW NOTES</span></button>` : ''}
-                        ${lessons ? `<ul class="space-y-3">${lessons}</ul>` : '<p class="font-bold">No lessons in this module yet.</p>'}
-                    </article>
+                    <details class="curriculum-module" data-course-module="${module._id}" ${moduleIndex === 0 ? 'open' : ''}>
+                        <summary class="curriculum-module-summary">
+                            <span class="curriculum-module-heading">MODULE ${moduleIndex + 1} · ${courseHtml(module.title)}</span>
+                            <span class="curriculum-module-summary-meta">
+                                ${showCompletion ? `<span class="curriculum-module-count">${completedCount}/${lessons.length}</span>` : ''}
+                                ${moduleCompleteMark}
+                                <i data-lucide="chevron-down" class="curriculum-chevron" aria-hidden="true"></i>
+                            </span>
+                        </summary>
+                        <div class="curriculum-module-content">
+                            ${module.description ? `<p class="module-copy curriculum-module-description">${courseHtml(module.description)}</p>` : ''}
+                            ${notes}
+                            ${lessonItems ? `<ul class="curriculum-lesson-list">${lessonItems}</ul>` : '<p class="curriculum-empty">No lessons in this module yet.</p>'}
+                        </div>
+                    </details>
                 `);
             }
             container.innerHTML = moduleSections.join('');
+            if (completedModules === modulesResponse.data.length && completedModules > 0) {
+                document.getElementById('course-completion-state')?.classList.remove('hidden');
+            }
             container.addEventListener('click', async (event) => {
                 const button = event.target.closest('[data-module-notes]');
                 if (!button) return;
@@ -109,6 +183,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const response = await window.api.courses.getById(courseId);
         const course = response.data;
+        courseData = course;
         document.title = `${course.title} - NYC`;
         document.getElementById('course-title').textContent = course.title;
         document.getElementById('course-description').textContent = course.description || course.shortDescription || 'Course description coming soon.';
@@ -139,41 +214,42 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('skills-panel').classList.remove('hidden');
         }
 
-        if (course.demoVideo) {
-            const demoStatus = document.getElementById('demo-status');
-            demoStatus.textContent = 'Loading course preview...';
-            try {
-                const player = new StreamingPlayer('course-demo');
-                await player.loadManifest(course.demoVideo);
-                demoStatus.textContent = 'Course introduction';
-            } catch (error) {
-                demoStatus.textContent = `Preview unavailable: ${error.message}`;
-            }
-        } else {
-            document.getElementById('demo-status').textContent = 'No course preview is available yet.';
-        }
-
         const token = localStorage.getItem('token');
         let user = null;
         try { user = JSON.parse(localStorage.getItem('user') || 'null'); } catch (error) {}
         const isOwner = user?.role === 'instructor' && String(course.instructor?._id) === String(user._id);
         const isManager = user?.role === 'admin' || isOwner;
         if (isManager) {
+            viewLoading?.classList.add('hidden');
+            courseOverviewSection?.classList.remove('hidden');
+            courseReviewsSection?.classList.remove('hidden');
+            courseContentArea?.classList.remove('hidden');
+            curriculumSection?.classList.remove('hidden');
+            discussionSection?.classList.add('hidden');
             document.getElementById('course-enrollment-card')?.classList.add('hidden');
+            loadDemoPreview();
             await loadCurriculum();
             return;
         }
 
         if (!token) {
+            viewLoading?.classList.add('hidden');
+            courseOverviewSection?.classList.remove('hidden');
+            courseReviewsSection?.classList.remove('hidden');
             document.getElementById('course-enrollment-card')?.classList.remove('hidden');
             enrollmentMessage.textContent = 'Sign in and enroll to view course modules and lessons.';
             loginLink.classList.remove('hidden');
+            loadDemoPreview();
             return;
         }
 
         if (user?.role !== 'student') {
+            viewLoading?.classList.add('hidden');
+            courseOverviewSection?.classList.remove('hidden');
+            courseReviewsSection?.classList.remove('hidden');
             document.getElementById('course-enrollment-card')?.classList.remove('hidden');
             enrollmentMessage.textContent = 'A student account is required to enroll in this course.';
+            loadDemoPreview();
             return;
         }
 
@@ -184,21 +260,30 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (error.status === 401) {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
+                viewLoading?.classList.add('hidden');
+                courseOverviewSection?.classList.remove('hidden');
+                courseReviewsSection?.classList.remove('hidden');
                 document.getElementById('course-enrollment-card')?.classList.remove('hidden');
                 enrollmentMessage.textContent = 'Your session expired. Sign in to enroll in this course.';
                 loginLink.classList.remove('hidden');
+                loadDemoPreview();
                 return;
             }
             throw error;
         }
         const isEnrolled = enrolledResponse.data.some((item) => String(item.course?._id) === String(courseId));
         if (isEnrolled) {
-            document.getElementById('course-enrollment-card')?.classList.remove('hidden');
-            enrollmentMessage.textContent = 'You are enrolled in this course.';
-            showEnrolledCourseTabs();
+            document.getElementById('course-enrollment-card')?.classList.add('hidden');
+            notifyReviewEnrollment();
+            showEnrolledCourseTabs(requestedView === 'curriculum' ? 'curriculum' : 'preview');
             await loadCurriculum();
             return;
         }
+
+        viewLoading?.classList.add('hidden');
+        courseOverviewSection?.classList.remove('hidden');
+        courseReviewsSection?.classList.remove('hidden');
+        loadDemoPreview();
 
         const coursePrice = Number(course.price) || 0;
         enrollmentMessage.textContent = coursePrice > 0
@@ -243,8 +328,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     return;
                                 }
                                 enrollmentMessage.textContent = 'Payment confirmed. You are enrolled in this course.';
+                                document.getElementById('course-enrollment-card')?.classList.add('hidden');
                                 enrollButton.classList.add('hidden');
-                                showEnrolledCourseTabs();
+                                notifyReviewEnrollment();
+                                showEnrolledCourseTabs('curriculum');
                                 await loadCurriculum();
                             } catch (error) {
                                 enrollmentMessage.textContent = `${error.message} Refresh this page before trying another payment.`;
@@ -265,8 +352,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 await window.api.courses.enroll(courseId);
                 enrollmentMessage.textContent = 'You are enrolled in this course.';
+                document.getElementById('course-enrollment-card')?.classList.add('hidden');
                 enrollButton.classList.add('hidden');
-                showEnrolledCourseTabs();
+                notifyReviewEnrollment();
+                showEnrolledCourseTabs('curriculum');
                 await loadCurriculum();
             } catch (error) {
                 enrollmentMessage.textContent = error.message;
@@ -275,6 +364,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     } catch (error) {
+        viewLoading?.classList.add('hidden');
+        if (requestedView === 'curriculum') {
+            courseOverviewSection?.classList.remove('hidden');
+            courseReviewsSection?.classList.remove('hidden');
+        }
         showError(error.message || 'Unable to load this course.');
     }
 });

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#090914">
+    <title>Verify Certificate - NYC</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { darkMode: 'class' };</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/theme.js"></script>
+</head>
+<body class="certificate-page">
+    <header class="certificate-toolbar">
+        <a href="index.html" class="certificate-toolbar-link">← NYC HOME</a>
+    </header>
+    <main class="certificate-main certificate-verification-main">
+        <section id="verification-card" class="certificate-verification-card" aria-live="polite">
+            <p class="certificate-kicker">NYC CREDENTIAL CHECK</p>
+            <div id="verification-loading" class="certificate-loading">Checking certificate…</div>
+            <div id="verification-result" class="hidden">
+                <div id="verification-status" class="certificate-verification-status"></div>
+                <p id="verification-message" class="certificate-verification-message"></p>
+                <div id="verification-details" class="certificate-verification-details hidden">
+                    <div><span>STUDENT</span><strong id="verification-student"></strong></div>
+                    <div><span>COMPLETED COURSE</span><strong id="verification-course"></strong></div>
+                    <div><span>COMPLETED</span><time id="verification-date"></time></div>
+                    <div><span>CERTIFICATE ID</span><strong id="verification-id"></strong></div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="js/api.js"></script>
+    <script src="js/certificate-verify.js"></script>
+</body>
+</html>

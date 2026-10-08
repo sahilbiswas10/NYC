@@ -7,6 +7,7 @@ const Lesson = require('../models/Lesson');
 const Media = require('../models/Media');
 const Instructor = require('../models/Instructor');
 const Enrollment = require('../models/Enrollment');
+const CourseReview = require('../models/CourseReview');
 const { canManageMedia } = require('../utils/mediaAccess');
 const { cleanupMedia } = require('../utils/mediaCleanup');
 
@@ -30,15 +31,56 @@ const removeThumbnail = async (filename) => {
     const relative = path.relative(thumbnailRoot, target);
     if (relative && !relative.startsWith('..') && !path.isAbsolute(relative)) await fs.unlink(target).catch(() => {});
 };
-const withThumbnailUrl = (course) => {
+const getCourseCatalogStats = async (courseIds) => {
+    if (!courseIds.length) return new Map();
+    const [reviews, enrollments, durations] = await Promise.all([
+        CourseReview.aggregate([
+            { $match: { course: { $in: courseIds } } },
+            { $group: { _id: '$course', averageRating: { $avg: '$rating' }, reviewCount: { $sum: 1 } } }
+        ]),
+        Enrollment.aggregate([
+            { $match: { course: { $in: courseIds }, status: { $in: ['active', 'completed'] } } },
+            { $group: { _id: '$course', enrollmentCount: { $sum: 1 } } }
+        ]),
+        Lesson.aggregate([
+            { $match: { course: { $in: courseIds } } },
+            { $group: { _id: '$course', durationSeconds: { $sum: '$duration' } } }
+        ])
+    ]);
+    const stats = new Map();
+    for (const item of reviews) stats.set(String(item._id), {
+        ...stats.get(String(item._id)),
+        averageRating: Math.round(item.averageRating * 10) / 10,
+        reviewCount: item.reviewCount
+    });
+    for (const item of enrollments) stats.set(String(item._id), {
+        ...stats.get(String(item._id)), enrollmentCount: item.enrollmentCount
+    });
+    for (const item of durations) stats.set(String(item._id), {
+        ...stats.get(String(item._id)), durationSeconds: item.durationSeconds
+    });
+    return stats;
+};
+
+const withThumbnailUrl = (course, stats = {}) => {
     const data = course.toObject ? course.toObject() : course;
-    return { ...data, thumbnailUrl: data.thumbnailFilename ? thumbnailUrl(data._id, data.thumbnailFilename) : null };
+    const enrollmentCount = stats.enrollmentCount ?? 0;
+    return {
+        ...data,
+        averageRating: stats.averageRating ?? 0,
+        reviewCount: stats.reviewCount ?? 0,
+        enrollmentCount,
+        totalStudents: enrollmentCount,
+        durationSeconds: stats.durationSeconds || Number(data.totalDuration) || 0,
+        thumbnailUrl: data.thumbnailFilename ? thumbnailUrl(data._id, data.thumbnailFilename) : null
+    };
 };
 
 exports.getCourses = async (_req, res) => {
     try {
         const courses = await Course.find({ status: 'published' }).populate('instructor', 'name').populate('instructorProfile', 'name title active').sort('-publishedAt -createdAt');
-        res.json({ success: true, data: courses.map(withThumbnailUrl) });
+        const stats = await getCourseCatalogStats(courses.map((course) => course._id));
+        res.json({ success: true, data: courses.map((course) => withThumbnailUrl(course, stats.get(String(course._id)))) });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Unable to load courses' });
     }
@@ -54,7 +96,8 @@ exports.getCourseById = async (req, res) => {
             student: req.user.id, course: course._id, status: { $in: ['active', 'completed'] }
         });
         if (course.status !== 'published' && !canSeeDraft && !enrolled) return res.status(404).json({ success: false, error: 'Course not found' });
-        res.json({ success: true, data: withThumbnailUrl(course) });
+        const stats = await getCourseCatalogStats([course._id]);
+        res.json({ success: true, data: withThumbnailUrl(course, stats.get(String(course._id))) });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Unable to load course' });
     }

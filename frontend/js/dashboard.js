@@ -70,9 +70,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 <div class="flex justify-between items-center gap-3 mb-4"><span class="bg-[var(--primary)] text-black px-2 py-1 text-xs font-black uppercase brutal-border">${completed ? 'Completed' : 'Enrolled'}</span><span class="font-black">${progress}%</span></div>
                                 <h3 class="font-black uppercase text-3xl mb-6 text-[var(--foreground)] flex-grow">${dashboardEscape(en.course.title)}</h3>
                                 <div class="w-full bg-black/10 dark:bg-white/10 brutal-border h-3 mb-6"><div class="bg-[var(--accent)] h-full" style="width:${progress}%"></div></div>
-                                <a href="../course.html?course=${en.course._id}" class="bg-black dark:bg-white text-white dark:text-black brutal-border py-3 px-4 font-black uppercase text-xl brutal-shadow hover:bg-[var(--primary)] hover:text-black transition-colors block text-center mt-auto">
-                                    VIEW COURSE
+                                <a href="../course.html?course=${encodeURIComponent(en.course._id)}&view=curriculum" class="bg-black dark:bg-white text-white dark:text-black brutal-border py-3 px-4 font-black uppercase text-xl brutal-shadow hover:bg-[var(--primary)] hover:text-black transition-colors block text-center mt-auto">
+                                    OPEN CURRICULUM
                                 </a>
+                                ${(completed || en.certificateId) ? `<a href="../certificate.html?course=${encodeURIComponent(en.course._id)}" class="bg-[var(--primary)] text-black brutal-border py-3 px-4 mt-3 font-black uppercase text-lg brutal-shadow hover:-translate-y-1 transition-transform block text-center">VIEW CERTIFICATE</a>` : ''}
                             </div>
                         `;
                     });

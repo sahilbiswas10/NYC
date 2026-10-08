@@ -25,6 +25,7 @@
                 <input type="hidden" id="edit-user-id">
                 <label class="block font-black uppercase">Name<input id="edit-user-name" required maxlength="100" class="mt-2 w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 brutal-border"></label>
                 <label class="block font-black uppercase">Email<input id="edit-user-email" type="email" required class="mt-2 w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 brutal-border"></label>
+                <label class="block font-black uppercase">Role<select id="edit-user-role" class="mt-2 w-full bg-[var(--bg-color)] text-[var(--foreground)] p-3 brutal-border"><option value="student">Student</option><option value="instructor">Instructor</option><option value="admin">Administrator (deployment managed)</option></select></label>
                 <div class="flex gap-4"><button type="button" id="cancel-edit-user" class="flex-1 bg-[var(--bg-color)] text-[var(--foreground)] brutal-border py-3 font-black uppercase">CANCEL</button><button type="submit" class="flex-1 bg-[var(--primary)] text-black brutal-border py-3 font-black uppercase">SAVE</button></div>
             </form>
         </div>
