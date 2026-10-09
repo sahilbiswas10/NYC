@@ -42,7 +42,7 @@ exports.uploadMedia = async (req, res) => {
 exports.getMediaStatus = async (req, res) => {
     try {
         if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ success: false, error: 'Media not found' });
-        const media = await Media.findById(req.params.id);
+        const media = await Media.findById(req.params.id).select('+processingError');
         if (!media) return res.status(404).json({ success: false, error: 'Media not found' });
         if (!(await canManageMedia(media, req.user))) {
             return res.status(403).json({ success: false, error: 'Not authorized to view this media' });
@@ -50,7 +50,9 @@ exports.getMediaStatus = async (req, res) => {
         res.json({ success: true, data: {
             status: media.processingStatus,
             progress: media.processingProgress,
-            error: media.processingStatus === 'failed' ? 'Media processing failed. Check the file format and upload again.' : undefined
+            error: media.processingStatus === 'failed'
+                ? (media.processingError || 'Media processing failed. Check the server logs for details.')
+                : undefined
         } });
     } catch (err) {
         res.status(500).json({ success: false, error: 'Unable to read media status' });

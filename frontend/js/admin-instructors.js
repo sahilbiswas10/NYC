@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'bg-[var(--accent)] text-white brutal-border px-4 py-2 font-black uppercase'; remove.textContent = 'DELETE';
                 remove.addEventListener('click', async () => {
-                    if (!confirm(`Delete ${profile.name}'s public profile? Assigned courses will become unassigned.`)) return;
+                    if (!await window.NYCUI.confirm(`Delete ${profile.name}'s public profile? Assigned courses will become unassigned.`)) return;
                     remove.disabled = true;
                     try { await window.api.admin.deleteInstructor(profile._id); await load(); }
                     catch (error) { showError(error.message); remove.disabled = false; }

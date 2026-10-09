@@ -3,7 +3,68 @@ document.addEventListener('DOMContentLoaded', () => {
     // with its fade class still applied. Clear it every time a document returns.
     window.addEventListener('pageshow', () => document.documentElement.classList.remove('page-leaving'));
     document.documentElement.classList.remove('page-leaving');
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const getSystemDialog = () => {
+        let dialog = document.getElementById('nyc-system-dialog');
+        if (dialog) return dialog;
+        dialog = document.createElement('dialog');
+        dialog.id = 'nyc-system-dialog';
+        dialog.className = 'nyc-system-dialog';
+        dialog.setAttribute('aria-labelledby', 'nyc-system-dialog-title');
+        dialog.setAttribute('aria-describedby', 'nyc-system-dialog-message');
+        dialog.innerHTML = `
+            <div class="nyc-system-dialog-panel">
+                <p id="nyc-system-dialog-title" class="nyc-system-dialog-title"></p>
+                <p id="nyc-system-dialog-message" class="nyc-system-dialog-message"></p>
+                <div class="nyc-system-dialog-actions">
+                    <button type="button" data-cancel>Cancel</button>
+                    <button type="button" data-confirm>Continue</button>
+                </div>
+            </div>`;
+        document.body.appendChild(dialog);
+        return dialog;
+    };
+
+    const showSystemDialogNow = (message, confirmMode) => new Promise((resolve) => {
+        const dialog = getSystemDialog();
+        const title = dialog.querySelector('#nyc-system-dialog-title');
+        const copy = dialog.querySelector('#nyc-system-dialog-message');
+        const cancel = dialog.querySelector('[data-cancel]');
+        const confirm = dialog.querySelector('[data-confirm]');
+        let closing = false;
+        title.textContent = confirmMode ? 'Confirm action' : 'NYC notification';
+        copy.textContent = String(message ?? '');
+        cancel.hidden = !confirmMode;
+        confirm.textContent = confirmMode ? 'Continue' : 'OK';
+        dialog.classList.remove('is-closing');
+        const finish = (accepted) => {
+            if (closing) return;
+            closing = true;
+            dialog.classList.add('is-closing');
+            window.setTimeout(() => {
+                if (dialog.open) dialog.close();
+                dialog.classList.remove('is-closing');
+                resolve(accepted);
+            }, 190);
+        };
+        cancel.onclick = () => finish(false);
+        confirm.onclick = () => finish(true);
+        dialog.oncancel = (event) => { event.preventDefault(); if (confirmMode) finish(false); };
+        dialog.onclick = (event) => { if (confirmMode && event.target === dialog) finish(false); };
+        dialog.showModal();
+        window.requestAnimationFrame(() => confirm.focus());
+    });
+
+    let systemDialogQueue = Promise.resolve();
+    const showSystemDialog = (message, confirmMode) => {
+        const next = systemDialogQueue.then(() => showSystemDialogNow(message, confirmMode));
+        systemDialogQueue = next.then(() => undefined, () => undefined);
+        return next;
+    };
+
+    window.NYCUI = {
+        confirm: (message) => showSystemDialog(message, true),
+        alert: (message) => showSystemDialog(message, false)
+    };
     if (!document.querySelector('footer')) {
         const footer = document.createElement('footer');
         footer.className = 'global-social-footer';
@@ -19,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(footer);
     }
 
-    if (!prefersReducedMotion) {
+    {
         const canvas = document.createElement('canvas');
         canvas.className = 'ambient-motion-background';
         canvas.setAttribute('aria-hidden', 'true');
@@ -84,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
             frame = requestAnimationFrame(paint);
         }
     }
-    if (!prefersReducedMotion) {
+    {
         const revealTargets = document.querySelectorAll('main > *, body > section');
         if ('IntersectionObserver' in window && revealTargets.length) {
             document.body.classList.add('motion-ready');
@@ -102,6 +163,45 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+    const replayMotion = (element) => {
+        element.classList.remove('motion-pop-in');
+        const siblingIndex = element.parentElement ? Array.prototype.indexOf.call(element.parentElement.children, element) : 0;
+        element.style.setProperty('--motion-delay', `${Math.min(Math.max(siblingIndex, 0), 7) * 42}ms`);
+        void element.offsetWidth;
+        element.classList.add('motion-pop-in');
+        window.setTimeout(() => {
+            element.classList.remove('motion-pop-in');
+            element.style.removeProperty('--motion-delay');
+        }, 700);
+    };
+    const dynamicMotionSelector = '.curriculum-module, .curriculum-lesson-row, .discussion-post, .course-review-card, article.brutal-shadow, table tbody tr, .module-notes-card';
+    const visibilityMotion = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            if (mutation.type === 'attributes') {
+                const element = mutation.target;
+                const wasHidden = (mutation.oldValue || '').split(/\s+/).includes('hidden');
+                if (wasHidden && !element.classList.contains('hidden') && !element.matches('dialog, .fixed.inset-0.z-50, .ambient-motion-background')) replayMotion(element);
+                continue;
+            }
+            for (const node of mutation.addedNodes) {
+                if (!(node instanceof Element)) continue;
+                if (node.matches(dynamicMotionSelector)) replayMotion(node);
+                node.querySelectorAll(dynamicMotionSelector).forEach(replayMotion);
+            }
+        }
+    });
+    visibilityMotion.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'], attributeOldValue: true, childList: true });
+    document.addEventListener('click', (event) => {
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
+        if (!link || link.target || link.hasAttribute('download')) return;
+        const destination = new URL(link.href, window.location.href);
+        if (destination.origin !== window.location.origin) return;
+        if (destination.pathname === window.location.pathname && destination.search === window.location.search) return;
+        event.preventDefault();
+        document.documentElement.classList.add('page-leaving');
+        window.setTimeout(() => { window.location.assign(destination.href); }, 260);
+    });
     const navLinks = document.getElementById('nav-links');
     if (!navLinks) return;
     navLinks.closest('nav')?.classList.add('lms-nav');
@@ -156,17 +256,4 @@ document.addEventListener('DOMContentLoaded', () => {
         window.initThemeToggle();
     }
 
-    if (!prefersReducedMotion) {
-        document.addEventListener('click', (event) => {
-            if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-            const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
-            if (!link || link.target || link.hasAttribute('download')) return;
-            const destination = new URL(link.href, window.location.href);
-            if (destination.origin !== window.location.origin) return;
-            if (destination.pathname === window.location.pathname && destination.search === window.location.search) return;
-            event.preventDefault();
-            document.documentElement.classList.add('page-leaving');
-            window.setTimeout(() => { window.location.assign(destination.href); }, 130);
-        });
-    }
 });

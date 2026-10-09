@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const removeItem = async (id, kind, button) => {
         const label = kind === 'discussion' ? 'discussion post and its replies' : 'course review';
-        if (!window.confirm(`Permanently delete this ${label}?`)) return;
+        if (!await window.NYCUI.confirm(`Permanently delete this ${label}?`)) return;
         button.disabled = true;
         try {
             if (kind === 'discussion') await window.api.admin.deleteDiscussion(id);

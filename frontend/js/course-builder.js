@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const showCourseMessage = (message, isError = false) => {
         const element = document.getElementById('course-save-toast');
-        if (!element) return alert(message);
+        if (!element) return window.NYCUI.alert(message);
         element.textContent = message;
         element.classList.toggle('course-save-toast--error', isError);
         element.classList.remove('hidden');
@@ -344,7 +344,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else if (action === 'module-view-notes') {
                 await window.openProtectedFile(() => window.api.modules.getNotes(courseId, moduleId));
             } else if (action === 'module-delete-notes') {
-                if (confirm('Remove the notes attached to this module?')) {
+                if (await window.NYCUI.confirm('Remove the notes attached to this module?')) {
                     await window.api.modules.deleteNotes(courseId, moduleId);
                     await loadModules();
                 }
@@ -367,12 +367,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 lessonModal.classList.remove('hidden');
             } else if (action === 'module-delete') {
-                if (confirm('Delete this module and all of its lessons?')) {
+                if (await window.NYCUI.confirm('Delete this module and all of its lessons?')) {
                     await window.api.modules.delete(courseId, moduleId);
                     await loadModules();
                 }
             } else if (action === 'lesson-delete') {
-                if (confirm('Delete this lesson and its saved progress?')) {
+                if (await window.NYCUI.confirm('Delete this lesson and its saved progress?')) {
                     await window.api.lessons.delete(moduleId, lessonId);
                     await loadModules();
                 }
@@ -395,7 +395,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 uploadModal.classList.remove('hidden');
                 await loadExistingMedia();
             } else if (action === 'lesson-remove-media') {
-                if (confirm('Remove this lesson media?')) {
+                if (await window.NYCUI.confirm('Remove this lesson media?')) {
                     await window.api.lessons.update(moduleId, lessonId, { media: null });
                     await loadModules();
                 }
@@ -429,7 +429,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     document.getElementById('remove-demo-btn')?.addEventListener('click', async () => {
-        if (!currentCourse?.demoVideo || !confirm('Remove the course demo video?')) return;
+        if (!currentCourse?.demoVideo || !await window.NYCUI.confirm('Remove the course demo video?')) return;
         try {
             await window.api.courses.update(courseId, { demoVideo: null });
             await fetchCourse();

@@ -15,7 +15,7 @@ router.get('/', protect, authorize('admin', 'instructor'), async (req, res) => {
     try {
         const query = req.user.role === 'admin' ? {} : { uploadedBy: req.user.id };
         const media = await Media.find(query)
-            .select('originalFilename mediaType duration fileSize processingStatus processingProgress uploadedBy createdAt')
+            .select('originalFilename mediaType duration fileSize processingStatus processingProgress uploadedBy createdAt +processingError')
             .sort('-createdAt');
         const ids = media.map((item) => item._id);
         const [lessons, demos] = await Promise.all([

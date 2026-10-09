@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (result.user.role === 'instructor') window.location.href = '/instructor/dashboard.html';
                 else window.location.href = '/student/dashboard.html';
             } catch (error) {
-                alert(error.message || 'Unable to sign in. Please try again.');
+                window.NYCUI.alert(error.message || 'Unable to sign in. Please try again.');
             }
         });
     }
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (registerError) {
                     registerError.textContent = error.message || 'Unable to create your account. Please try again.';
                     registerError.classList.remove('hidden');
-                } else alert(error.message || 'Unable to create your account. Please try again.');
+                } else window.NYCUI.alert(error.message || 'Unable to create your account. Please try again.');
             }
         });
     }

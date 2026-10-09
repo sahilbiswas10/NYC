@@ -66,16 +66,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!course) return;
         try {
             if (button.dataset.action === 'delete') {
-                if (!confirm(`Delete “${course.title}” and its course content? This cannot be undone.`)) return;
+                if (!await window.NYCUI.confirm(`Delete “${course.title}” and its course content? This cannot be undone.`)) return;
                 await window.api.courses.delete(course._id);
             } else {
                 const status = button.dataset.action === 'publish' ? 'published' : button.dataset.action === 'unpublish' ? 'unpublished' : 'archived';
-                if (status === 'archived' && !confirm(`Archive “${course.title}”?`)) return;
+                if (status === 'archived' && !await window.NYCUI.confirm(`Archive “${course.title}”?`)) return;
                 await window.api.courses.update(course._id, { status });
             }
             window.location.reload();
         } catch (error) {
-            alert(error.message);
+            window.NYCUI.alert(error.message);
         }
     });
 });

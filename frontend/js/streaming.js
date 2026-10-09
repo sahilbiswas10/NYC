@@ -11,7 +11,17 @@ class StreamingPlayer {
             method: 'POST',
             headers: ticketHeaders
         });
-        if (!ticketResponse.ok) throw new Error('You are not authorized to play this media.');
+        if (!ticketResponse.ok) {
+            const responseText = await ticketResponse.text();
+            let message = '';
+            try {
+                const payload = JSON.parse(responseText);
+                message = payload.error || payload.message || '';
+            } catch (error) {
+                message = responseText.trim();
+            }
+            throw new Error(message || `Unable to authorize media playback (HTTP ${ticketResponse.status}).`);
+        }
         const manifestUrl = `/api/media/play/${encodeURIComponent(mediaId)}/manifest`;
 
         return new Promise((resolve, reject) => {
@@ -24,7 +34,12 @@ class StreamingPlayer {
                 });
                 this.hls.on(Hls.Events.MANIFEST_PARSED, () => resolve());
                 this.hls.on(Hls.Events.ERROR, (_event, data) => {
-                    if (data.fatal) reject(new Error('The HLS stream could not be loaded.'));
+                    if (!data.fatal) return;
+                    const status = data.response?.code;
+                    const responseText = data.response?.text?.trim();
+                    reject(new Error(responseText || (status
+                        ? `The HLS stream request failed (HTTP ${status}).`
+                        : 'The HLS stream could not be loaded.')));
                 });
                 this.hls.loadSource(manifestUrl);
                 this.hls.attachMedia(this.video);

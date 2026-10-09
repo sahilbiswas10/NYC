@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             restore: `Restore ${studentName}'s access to “${courseName}”? Progress starts over.`,
             'reset-progress': `Reset ${studentName}'s progress in “${courseName}”? Saved lesson progress and the course certificate will be cleared.`
         };
-        if (!window.confirm(prompts[action])) return;
+        if (!await window.NYCUI.confirm(prompts[action])) return;
         button.disabled = true;
         try {
             await window.api.admin.updateEnrollment(enrollment._id, action);

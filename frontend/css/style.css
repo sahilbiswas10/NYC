@@ -37,6 +37,16 @@ textarea { line-height: 1.55; overflow-wrap: anywhere; }
 .course-detail-title { max-width: 18ch; }
 .course-price-badge { width: fit-content; max-width: 100%; padding: .9rem 1.15rem; color: var(--foreground); background: linear-gradient(110deg, rgba(34,211,238,.16), rgba(168,85,247,.18)); border: 2px solid var(--primary); box-shadow: 0 0 24px rgba(34,211,238,.12), 4px 4px 0 var(--foreground); font-size: 1.1rem; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; overflow-wrap: anywhere; }
 .course-card-image { height: 12rem; flex: none; }
+.course-card { position: relative; overflow: hidden; transform-style: preserve-3d; animation: gallery-card-arrive 620ms cubic-bezier(.16,.84,.24,1) backwards; animation-delay: var(--gallery-delay, 0ms); }
+.course-card-image { isolation: isolate; }
+.course-card-image::after { content: ""; position: absolute; z-index: 1; inset: -30% auto -30% -60%; width: 42%; pointer-events: none; opacity: 0; background: linear-gradient(105deg, transparent, rgba(255,255,255,.32), transparent); transform: skewX(-16deg); }
+.course-card:hover .course-card-image::after { opacity: 1; animation: gallery-image-glint 760ms cubic-bezier(.2,.7,.2,1) both; }
+.course-card-image img, .course-card-image > svg { transition: transform 680ms cubic-bezier(.16,.84,.24,1), filter 500ms ease; will-change: transform; }
+.course-card:hover .course-card-image img { transform: scale(1.1) translate3d(0,-2px,0) rotate(.7deg); filter: saturate(1.12) contrast(1.03); }
+.course-card:hover .course-card-image > svg { transform: scale(1.12) rotate(5deg); }
+.course-card:hover { box-shadow: 10px 10px 0 var(--primary), 0 18px 42px rgba(34,211,238,.14); }
+@keyframes gallery-card-arrive { from { opacity: 0; transform: perspective(900px) translate3d(0,26px,0) rotateX(5deg) scale(.97); filter: blur(3px); } to { opacity: 1; transform: perspective(900px) translate3d(0,0,0) rotateX(0) scale(1); filter: blur(0); } }
+@keyframes gallery-image-glint { from { left: -60%; } to { left: 130%; } }
 .course-card-title { display: -webkit-box; min-height: 2.35em; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.15; overflow-wrap: anywhere; }
 .course-card-description { display: -webkit-box; min-height: 4.65em; max-height: 4.65em; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-height: 1.55; }
 .module-copy { max-width: 72ch; white-space: normal; overflow-wrap: anywhere; line-height: 1.65; }
@@ -361,11 +371,157 @@ html.dark .course-price-badge { border-color: #22d3ee; box-shadow: 0 0 22px rgba
   .course-discovery-filters { grid-template-columns: 1fr; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
-  .motion-ready .motion-reveal { opacity: 1; transform: none; }
-  .ambient-motion-background { display: none; }
-  body::after { animation: none; }
-  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+/* NYC / NEON INTERFACE MOTION SYSTEM */
+:root {
+  --motion-violet: #a855f7;
+  --motion-cyan: #22d3ee;
+  --motion-pink: #ec4899;
+  --motion-ease: cubic-bezier(.2,.85,.2,1);
+  --motion-spring: cubic-bezier(.16,1,.3,1);
+  --motion-glow: 0 0 26px rgba(34,211,238,.2), 0 0 48px rgba(168,85,247,.13);
+  color-scheme: light;
+}
+
+html.dark { color-scheme: dark; }
+html { scroll-behavior: smooth; scroll-padding-top: 6rem; }
+body {
+  transition: background-color 520ms var(--motion-ease), color 420ms var(--motion-ease);
+  animation: interface-fade-in 520ms var(--motion-ease) both;
+}
+body::before {
+  content: "";
+  position: fixed;
+  z-index: -2;
+  inset: -18%;
+  pointer-events: none;
+  opacity: .36;
+  background:
+    radial-gradient(ellipse at 18% 32%, rgba(168,85,247,.28), transparent 36%),
+    radial-gradient(ellipse at 78% 62%, rgba(34,211,238,.2), transparent 38%),
+    radial-gradient(ellipse at 48% 84%, rgba(236,72,153,.12), transparent 34%);
+  background-size: 120% 120%;
+  animation: aurora-float 22s ease-in-out infinite alternate;
+  will-change: transform;
+}
+html.dark body::before { opacity: .54; }
+body::after { opacity: .3; animation-duration: 27s; }
+
+@keyframes interface-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes aurora-float {
+  0% { transform: translate3d(-1.5%, -1%, 0) rotate(-1deg) scale(1); }
+  50% { transform: translate3d(1%, 1.2%, 0) rotate(.6deg) scale(1.035); }
+  100% { transform: translate3d(1.7%, -.6%, 0) rotate(1deg) scale(1.015); }
+}
+
+nav {
+  position: sticky;
+  background-color: color-mix(in srgb, var(--bg-color) 88%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.35);
+  backdrop-filter: blur(18px) saturate(1.35);
+  animation: nav-drop 680ms var(--motion-spring) both;
+}
+nav.lms-nav { box-shadow: 0 10px 34px rgba(8,8,23,.08), 0 1px 0 rgba(34,211,238,.24); }
+nav #nav-links > a { position: relative; }
+nav #nav-links > a::after { content: ""; position: absolute; right: 0; bottom: -.42rem; left: 0; height: 2px; background: linear-gradient(90deg,var(--motion-violet),var(--motion-cyan)); transform: scaleX(0); transform-origin: left; transition: transform 320ms var(--motion-spring); }
+nav #nav-links > a:hover::after, nav #nav-links > a:focus-visible::after { transform: scaleX(1); }
+nav #theme-toggle { overflow: hidden; box-shadow: 0 0 0 rgba(34,211,238,0); transition: transform 420ms var(--motion-spring), box-shadow 360ms var(--motion-ease), background-color 360ms var(--motion-ease); }
+nav #theme-toggle:hover { box-shadow: 0 0 24px rgba(34,211,238,.26), 3px 3px 0 var(--foreground); }
+nav #theme-toggle svg { transition: transform 520ms var(--motion-spring); }
+nav #theme-toggle:hover svg { transform: rotate(90deg) scale(1.13); }
+
+a, button, input, select, textarea, [role="button"] {
+  transition-property: color, background-color, border-color, box-shadow, transform, translate, scale, filter, opacity;
+  transition-duration: 360ms;
+  transition-timing-function: var(--motion-ease);
+}
+a[href]:hover, button:not(:disabled):hover, [role="button"]:hover { filter: saturate(1.12) brightness(1.035); }
+button:not(:disabled):active, a[href]:active, [role="button"]:active { scale: .975; transition-duration: 110ms; }
+:focus-visible { outline: 3px solid var(--motion-cyan) !important; outline-offset: 3px; box-shadow: 0 0 0 5px color-mix(in srgb, var(--motion-cyan) 20%, transparent), var(--motion-glow); }
+::selection { color: #080817; background: #67e8f9; }
+
+.brutal-border { transition: border-color 360ms var(--motion-ease), box-shadow 420ms var(--motion-ease), filter 360ms var(--motion-ease); }
+.brutal-shadow, .brutal-shadow-lg { transition: transform 420ms var(--motion-spring), box-shadow 420ms var(--motion-ease), filter 360ms var(--motion-ease); }
+.brutal-shadow:hover, .brutal-shadow-lg:hover { filter: brightness(1.045) drop-shadow(0 0 12px rgba(168,85,247,.12)); }
+.course-card, .curriculum-module, .discussion-post, .course-review-card, .recruiter-mark, .certificate-verification-card { transition: transform 460ms var(--motion-spring), box-shadow 460ms var(--motion-ease), border-color 360ms var(--motion-ease), background-color 420ms var(--motion-ease); }
+.curriculum-module:hover, .discussion-post:hover, .course-review-card:hover { box-shadow: 7px 7px 0 var(--foreground), 0 0 28px rgba(168,85,247,.12); }
+.curriculum-module-summary { transition: background-color 300ms var(--motion-ease), color 300ms var(--motion-ease); }
+.curriculum-module-summary:hover { background: color-mix(in srgb, var(--primary) 10%, transparent); }
+.course-content-tab, .course-filter-trigger, .course-filter-apply, .course-review-submit, .course-filter-reset, .certificate-toolbar-link, .certificate-print-button { transition: transform 380ms var(--motion-spring), box-shadow 380ms var(--motion-ease), filter 320ms var(--motion-ease), background-color 320ms var(--motion-ease); }
+.course-content-tab:hover, .course-filter-trigger:hover, .course-filter-apply:hover, .course-review-submit:hover, .certificate-toolbar-link:hover, .certificate-print-button:hover { box-shadow: 0 0 0 1px var(--motion-cyan), 0 0 24px rgba(34,211,238,.18), 5px 5px 0 var(--foreground); }
+
+input, select, textarea {
+  transition: border-color 300ms var(--motion-ease), box-shadow 360ms var(--motion-ease), background-color 360ms var(--motion-ease), color 300ms var(--motion-ease);
+}
+input:focus, select:focus, textarea:focus { border-color: var(--motion-cyan) !important; box-shadow: 0 0 0 3px rgba(34,211,238,.16), 0 0 24px rgba(34,211,238,.14); }
+table tbody tr { transition: background-color 240ms ease, color 240ms ease; }
+table tbody tr:hover { background-color: color-mix(in srgb, var(--primary) 8%, transparent); }
+
+/* In-page editor overlays keep their existing size and position; only their entrance/exit moves. */
+.fixed.inset-0.z-50 {
+  opacity: 1;
+  transition: opacity 280ms var(--motion-ease), display 280ms allow-discrete;
+}
+.fixed.inset-0.z-50.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease-in, display 280ms allow-discrete;
+}
+.fixed.inset-0.z-50 > :first-child {
+  transform-origin: center;
+  transition: opacity 300ms var(--motion-ease), transform 420ms var(--motion-spring), box-shadow 420ms var(--motion-ease);
+}
+.fixed.inset-0.z-50.hidden > :first-child { opacity: 0; transform: translate3d(0,18px,0) scale(.96) rotateX(3deg); }
+@starting-style {
+  .fixed.inset-0.z-50:not(.hidden) { opacity: 0; }
+  .fixed.inset-0.z-50:not(.hidden) > :first-child { opacity: 0; transform: translate3d(0,22px,0) scale(.94) rotateX(4deg); }
+}
+
+dialog::backdrop { background: rgba(5,7,20,.76); -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0); transition: background-color 300ms ease, backdrop-filter 400ms ease; }
+dialog[open]::backdrop { -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2); animation: modal-backdrop-in 360ms ease both; }
+.course-filter-dialog[open] { animation: dialog-pop-in 420ms var(--motion-spring) both; }
+.course-filter-dialog-panel { animation: dialog-panel-in 480ms var(--motion-spring) both; }
+@keyframes modal-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dialog-pop-in { from { opacity: 0; transform: translateY(18px) scale(.975); filter: blur(5px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
+@keyframes dialog-panel-in { from { opacity: 0; transform: translateY(24px) scale(.95) rotateX(3deg); } to { opacity: 1; transform: translateY(0) scale(1) rotateX(0); } }
+
+.nyc-system-dialog {
+  width: min(32rem, calc(100vw - 2rem));
+  max-width: none;
+  padding: 0;
+  overflow: visible;
+  color: var(--foreground);
+  background: transparent;
+  border: 0;
+}
+.nyc-system-dialog::backdrop { background: rgba(5,7,20,.72); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.nyc-system-dialog-panel { padding: clamp(1.25rem,4vw,2rem); background: var(--bg-color); border: 3px solid var(--foreground); box-shadow: 8px 8px 0 var(--primary), 0 0 42px rgba(34,211,238,.18); }
+.nyc-system-dialog-title { margin: 0 0 .65rem; color: var(--accent); font-size: .78rem; font-weight: 1000; letter-spacing: .14em; text-transform: uppercase; }
+.nyc-system-dialog-message { margin: 0; line-height: 1.65; font-weight: 750; overflow-wrap: anywhere; }
+.nyc-system-dialog-actions { display: flex; justify-content: flex-end; gap: .75rem; margin-top: 1.5rem; }
+.nyc-system-dialog-actions button { min-width: 6rem; padding: .7rem 1rem; color: var(--foreground); background: var(--bg-color); border: 2px solid var(--foreground); box-shadow: 3px 3px 0 var(--foreground); font-weight: 900; text-transform: uppercase; }
+.nyc-system-dialog-actions button[data-confirm] { color: #080817; background: linear-gradient(110deg,var(--motion-violet),var(--motion-cyan)); }
+.nyc-system-dialog-actions button:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--foreground), 0 0 20px rgba(34,211,238,.18); }
+.nyc-system-dialog .nyc-system-dialog-panel { animation: dialog-panel-in 440ms var(--motion-spring) both; }
+.nyc-system-dialog.is-closing { animation: modal-backdrop-out 180ms ease both; }
+.nyc-system-dialog.is-closing .nyc-system-dialog-panel { animation: dialog-panel-out 180ms ease both; }
+@keyframes modal-backdrop-out { to { opacity: 0; } }
+@keyframes dialog-panel-out { to { opacity: 0; transform: translateY(10px) scale(.97); filter: blur(3px); } }
+
+.course-save-toast { border-color: transparent; background: linear-gradient(var(--bg-color),var(--bg-color)) padding-box, linear-gradient(110deg,var(--motion-violet),var(--motion-cyan),var(--motion-pink)) border-box; background-size: auto, 220% 220%; animation: toast-gradient 4s ease infinite, toast-float 4.5s ease-in-out infinite; }
+.course-save-toast.is-visible { animation: toast-gradient 4s ease infinite, toast-float 4.5s ease-in-out infinite, toast-arrive 520ms var(--motion-spring) both; }
+.course-save-toast--error { color: #fff; border-color: transparent; background: linear-gradient(110deg,#dc2626,#be123c) padding-box, linear-gradient(110deg,#fb7185,#f97316) border-box; }
+@keyframes toast-gradient { 0%,100% { background-position: 0 0,0% 50%; } 50% { background-position: 0 0,100% 50%; } }
+@keyframes toast-float { 0%,100% { box-shadow: 7px 7px 0 var(--foreground), 0 0 22px rgba(34,211,238,.16); } 50% { box-shadow: 7px 7px 0 var(--foreground), 0 0 34px rgba(168,85,247,.24); } }
+@keyframes toast-arrive { from { opacity: 0; transform: translateY(20px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.motion-pop-in { animation: ui-pop-in 520ms var(--motion-spring) both; animation-delay: var(--motion-delay, 0ms); }
+@keyframes ui-pop-in { from { opacity: 0; transform: translate3d(0,16px,0) scale(.985); } to { opacity: 1; transform: translate3d(0,0,0) scale(1); } }
+.motion-ready .motion-reveal { transition-duration: 680ms; transition-timing-function: var(--motion-spring); }
+.motion-ready .motion-reveal.is-visible { filter: none; }
+h1.text-shadow-brutal { animation: title-energy 6s ease-in-out infinite; }
+@keyframes title-energy { 0%,100% { filter: drop-shadow(0 0 0 rgba(34,211,238,0)); } 50% { filter: drop-shadow(0 0 12px rgba(34,211,238,.2)); } }
+html.page-leaving body { opacity: 0; filter: blur(9px); transform: scale(.988); transition: opacity 250ms cubic-bezier(.65,0,.84,0), filter 260ms ease-in, transform 260ms var(--motion-ease); }
+
+@media (max-width: 640px) {
+  .nyc-system-dialog-actions { flex-direction: column-reverse; }
+  .nyc-system-dialog-actions button { width: 100%; }
 }

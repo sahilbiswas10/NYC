@@ -200,7 +200,7 @@
                     const priceLabel = Number(course.price) > 0 ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(course.price) : 'Free';
                     const details = [course.level, course.durationSeconds > 0 ? formatDuration(course.durationSeconds) : '', `${Number(course.enrollmentCount) || 0} enrolled`].filter(Boolean);
                     return `
-                        <div class="course-card bg-[var(--bg-color)] brutal-border brutal-shadow group transition-all hover:-translate-y-2 hover:-translate-x-2 hover:shadow-[12px_12px_0px_0px_${color}] flex flex-col h-full">
+                        <div class="course-card bg-[var(--bg-color)] brutal-border brutal-shadow group transition-all hover:-translate-y-2 hover:-translate-x-2 hover:shadow-[12px_12px_0px_0px_${color}] flex flex-col h-full" style="--gallery-delay: ${Math.min(index, 7) * 65}ms">
                             <div class="course-card-image brutal-border border-t-0 border-x-0 relative overflow-hidden flex items-center justify-center" style="background-color: ${color}">${courseImage}</div>
                             <div class="p-6 flex flex-col flex-grow">
                                 <div class="flex flex-wrap items-center justify-between gap-2 mb-3 text-sm font-black uppercase"><span class="text-[var(--accent)]">${escapeHtml(priceLabel)}</span><span aria-label="${escapeHtml(reviewLabel)}">${escapeHtml(reviewLabel)}</span></div>

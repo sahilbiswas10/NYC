@@ -16,7 +16,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!response.data.length) { const row = document.createElement('tr'); const empty = textCell('No media found.'); empty.colSpan = 7; row.appendChild(empty); table.appendChild(row); return; }
             for (const media of response.data) {
                 const row = document.createElement('tr');
-                row.append(textCell(media.originalFilename || 'Uploaded media'), textCell(media.mediaType || 'Unknown'), textCell(media.fileSize ? `${(media.fileSize / 1048576).toFixed(2)} MB` : '—'), textCell(media.processingStatus), textCell(`${media.processingProgress || 0}%`));
+                const statusText = media.processingStatus === 'failed' && media.processingError
+                    ? `${media.processingStatus}: ${media.processingError}`
+                    : media.processingStatus;
+                row.append(textCell(media.originalFilename || 'Uploaded media'), textCell(media.mediaType || 'Unknown'), textCell(media.fileSize ? `${(media.fileSize / 1048576).toFixed(2)} MB` : '—'), textCell(statusText), textCell(`${media.processingProgress || 0}%`));
                 const locationCell = document.createElement('td'); locationCell.className = 'py-4 px-3 border-b-2 border-black/10 dark:border-white/10 align-top';
                 const locations = media.placements || [];
                 if (!locations.length) locationCell.textContent = 'Not attached to a course';
@@ -29,14 +32,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 row.appendChild(locationCell);
                 const actionCell = document.createElement('td'); actionCell.className = 'py-4 px-3 border-b-2 border-black/10 dark:border-white/10 text-right align-top whitespace-nowrap';
-                if (locations.length && ['video', 'audio'].includes(media.mediaType) && media.processingStatus === 'ready') {
+                if (locations.length && ['video', 'audio'].includes(media.mediaType) && ['ready', 'failed'].includes(media.processingStatus)) {
                     const replace = document.createElement('button'); replace.type = 'button'; replace.className = 'bg-[var(--primary)] text-black brutal-border px-3 py-2 text-xs font-black uppercase mr-2'; replace.textContent = 'REPLACE FILE';
                     replace.addEventListener('click', () => { replaceTarget = media; replacementInput.accept = media.mediaType === 'video' ? 'video/mp4,video/quicktime,video/webm,video/x-matroska' : 'audio/mpeg,audio/wav,audio/aac'; replacementInput.click(); });
                     actionCell.appendChild(replace);
                 }
                 const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'bg-[var(--accent)] text-white brutal-border px-3 py-2 text-xs font-black uppercase'; remove.textContent = 'DELETE';
                 remove.addEventListener('click', async () => {
-                    if (!confirm('Delete this media file? Attached media must first be replaced or removed.')) return;
+                    if (!await window.NYCUI.confirm('Delete this media file? Attached media must first be replaced or removed.')) return;
                     remove.disabled = true;
                     try { await window.api.media.delete(media._id); await load(); }
                     catch (error) { showError(error.message); remove.disabled = false; }

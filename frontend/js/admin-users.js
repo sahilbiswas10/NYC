@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             remove.textContent = account.role === 'admin' ? 'DEPLOYMENT MANAGED' : account._id === currentUserId ? 'CURRENT ACCOUNT' : 'DELETE';
             remove.disabled = account.role === 'admin' || account._id === currentUserId;
             remove.addEventListener('click', async () => {
-                if (!confirm(`Permanently delete ${account.name}'s account, enrollments, progress, and uploaded media? Courses they own will transfer to your admin account. Courses using their uploaded media will be unpublished.`)) return;
+                if (!await window.NYCUI.confirm(`Permanently delete ${account.name}'s account, enrollments, progress, and uploaded media? Courses they own will transfer to your admin account. Courses using their uploaded media will be unpublished.`)) return;
                 remove.disabled = true;
                 try { await window.api.admin.deleteUser(account._id); await loadUsers(); }
                 catch (error) { showError(error.message); remove.disabled = false; }
