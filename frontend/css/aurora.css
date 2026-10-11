@@ -320,26 +320,54 @@
   body .ag-close-button svg { width: 1.15rem; height: 1.15rem; transition: transform 220ms var(--motion-spring); }
   body .ag-close-button:hover svg { transform: rotate(90deg); }
 
-  /* Only content fades on departure: fixed navigation, overlays and video sizing stay stable. */
+  /* Same-origin pages share a browser-managed transition when supported. */
+  @view-transition { navigation: auto; }
+  ::view-transition { pointer-events: none; }
+  ::view-transition-group(root) {
+    animation-duration: 620ms;
+    animation-timing-function: cubic-bezier(.65,0,.35,1);
+  }
+  ::view-transition-old(root) {
+    animation: none; opacity: 1; mix-blend-mode: normal;
+  }
+  ::view-transition-new(root) {
+    /* Reveal opaque pixels instead of blending two pages of text together. */
+    animation: ag-document-reveal 620ms cubic-bezier(.65,0,.35,1) both;
+    opacity: 1; mix-blend-mode: normal;
+  }
+  ::view-transition-group(nyc-navigation), ::view-transition-new(nyc-navigation) { animation: none; }
+  ::view-transition-old(nyc-navigation) { display: none; }
+  body > nav { view-transition-name: nyc-navigation; animation: none; }
+  html.ag-native-transition body > main,
+  html.ag-native-transition body > .learning-main,
+  html.ag-native-transition body > .learning-sidebar {
+    opacity: 1; translate: none; transition: none;
+  }
+  @keyframes ag-document-reveal {
+    from { clip-path: inset(0 100% 0 0); }
+    to { clip-path: inset(0 0 0 0); }
+  }
+
+  /* The fallback keeps content visible while the destination is requested. */
   body { animation: none; }
   body > main, body > .learning-main, body > .learning-sidebar {
-    transition: opacity 320ms ease, translate 360ms cubic-bezier(.22,.72,.24,1);
+    transition: opacity 560ms ease;
   }
   html.page-leaving body { opacity: 1; filter: none; transform: none; }
   html.page-leaving body > main, html.page-leaving body > .learning-main, html.page-leaving body > .learning-sidebar {
-    opacity: .72; translate: 0 -8px;
+    opacity: .98;
   }
-  html.page-leaving::after {
+  html.page-leaving:not(.ag-native-transition)::after {
     content: ""; position: fixed; z-index: 9997; inset: 0; pointer-events: none;
     background: linear-gradient(115deg,transparent 5%,rgba(var(--ag-violet-rgb),.18) 40%,rgba(var(--ag-cyan-rgb),.22) 60%,transparent 95%);
-    animation: ag-navigation-sweep 360ms ease-in-out both;
+    animation: ag-navigation-sweep 560ms ease-in-out both;
   }
   /* The destination animates as soon as it is ready; navigation never waits. */
   .ag-page-arrival-sweep { position: fixed; z-index: 9996; inset: 0; overflow: hidden; pointer-events: none; contain: strict; }
   .ag-page-arrival-sweep::before, .ag-page-arrival-sweep::after {
     content: ""; position: absolute; top: -15%; bottom: -15%; left: -15%; width: 75%;
     background: linear-gradient(90deg,transparent,rgba(var(--ag-violet-rgb),.14) 40%,rgba(var(--ag-cyan-rgb),.2) 72%,transparent);
-    animation: ag-arrival-sweep 900ms cubic-bezier(.3,.45,.25,1) both;
+    animation: ag-arrival-sweep 1100ms cubic-bezier(.3,.45,.25,1) both;
   }
   .ag-page-arrival-sweep::after {
     width: 42%; background: linear-gradient(90deg,transparent,rgba(var(--ag-violet-rgb),.13),transparent);
@@ -356,13 +384,10 @@
     transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 200ms ease, transform 200ms var(--motion-spring);
   }
 
-  /* A bounded loading screen; the same chrome orb lands in the home hero. */
+  /* The loader copies the hero's SVG, material and running orbital animations. */
   html.ag-home-loading:not(.ag-loader-mounted)::before {
-    content: ""; position: fixed; inset: 0; z-index: 9998; pointer-events: none; background: var(--bg-color);
-  }
-  html.ag-home-loading:not(.ag-loader-mounted)::after {
-    content: "NYC"; position: fixed; left: 50%; top: 50%; translate: -50% -50%;
-    z-index: 9999; font: 800 2.6rem var(--font-reading); color: var(--foreground); pointer-events: none;
+    content: ""; position: fixed; inset: 0; z-index: 9998; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 45%,rgba(var(--ag-violet-rgb),.24),transparent 55%),var(--bg-color);
   }
   .ag-loader { position: fixed; z-index: 9998; inset: 0; pointer-events: none; }
   html.ag-loading:not(.ag-home-loading):not(.ag-loader-mounted)::before {
@@ -372,7 +397,7 @@
     position: absolute; inset: 0;
     background: radial-gradient(ellipse at 50% 45%,rgba(var(--ag-violet-rgb),.24),transparent 55%),var(--bg-color);
   }
-  .ag-loader-flight { position: absolute; width: 148px; height: 148px; left: calc(50% - 74px); top: calc(50% - 74px); transform-origin: center; }
+  .ag-loader-flight { position: absolute; width: 148px; height: 148px; left: calc(50% - 74px); top: calc(50% - 74px); transform-origin: center; opacity: 0; will-change: transform, opacity; }
   .ag-loader-orb {
     display: grid; place-items: center; position: relative; width: 100%; height: 100%; border-radius: 50%;
     border: 1px solid rgba(205,220,255,.65);
@@ -392,7 +417,7 @@
   .ag-loader--compact .ag-loader-backdrop, .ag-loader--compact .ag-loader-caption { display: none; }
   .ag-loader--compact .ag-loader-flight { left: auto; top: 1rem; right: 1.25rem; width: 36px; height: 36px; }
   .ag-loader--compact .ag-loader-orb span { font-size: .55rem; }
-  html.ag-logo-arriving .nyc-hero-core { visibility: hidden; }
+  html.ag-logo-arriving .nyc-hero-art .nyc-hero-core { visibility: hidden; }
   @keyframes ag-orb-orientation { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
   @keyframes ag-loading-pulse { from { scale: .4 1; opacity: .4; background-position: 0% 50%; } to { scale: 1 1; opacity: 1; background-position: 100% 50%; } }
   @keyframes ag-navigation-sweep { from { opacity: 0; transform: translateX(-35%); } to { opacity: 1; transform: translateX(15%); } }

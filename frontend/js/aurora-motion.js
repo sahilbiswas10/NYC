@@ -274,6 +274,9 @@
             if (revealed.has(element)) return;
             if (root.classList.contains('ag-home-loading')) { pendingEntrances.add(element); return; }
             revealed.add(element);
+            // The page reveal already animates this viewport. Keep its content
+            // stationary; offscreen elements still pop in when scrolled into view.
+            if (root.classList.contains('ag-native-transition')) return;
             if (element.closest('.ag-page-arrival-target, .ag-scroll-arrival-target') || element.contains(document.activeElement)) return;
             // Keep playing media stationary; its surrounding text can still enter.
             if ([...element.querySelectorAll('video, audio')].some((media) => !media.paused)) return;
@@ -294,6 +297,7 @@
             animation.finished.then(release, release);
         };
         const settleEntrances = () => activeEntrances.forEach((element) => entranceAnimations.get(element)?.cancel());
+        window.addEventListener('nyc:page-transition-start', settleEntrances);
         window.addEventListener('pagehide', settleEntrances);
         window.addEventListener('beforeprint', settleEntrances);
         window.addEventListener('nyc:page-ready', () => {
