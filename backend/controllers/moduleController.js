@@ -73,6 +73,8 @@ exports.deleteModule = async (req, res) => {
         const lessonIds = lessons.map((lesson) => lesson._id);
         await LessonProgress.deleteMany({ lesson: { $in: lessonIds } });
         await Enrollment.updateMany({ lastAccessedLesson: { $in: lessonIds } }, { $unset: { lastAccessedLesson: 1, lastAccessedAt: 1 } });
+        await require('../models/QuizResult').deleteMany({ module: module._id });
+        await require('../models/Quiz').deleteMany({ module: module._id });
         await module.deleteOne();
         const totalLessons = await Lesson.countDocuments({ course: module.course._id });
         await Course.updateOne({ _id: module.course._id }, { $set: { totalLessons } });
@@ -98,7 +100,11 @@ exports.getModulesByCourse = async (req, res) => {
         if (course.status !== 'published' && !isAdmin && !isOwner && !isLearner) return res.status(404).json({ success: false, error: 'Course not found' });
         if (!isAdmin && !isOwner && !isLearner) return res.status(403).json({ success: false, error: 'Enroll in this course to view its curriculum' });
         const modules = await Module.find({ course: course._id }).select('-notesStorageFilename').sort({ order: 1, _id: 1 });
-        res.json({ success: true, data: modules });
+        const state = isLearner ? await require('../utils/learningAccess').getLearningState(course._id, req.user.id) : null;
+        const quizzes = await require('../models/Quiz').find({ course: course._id, kind: 'module', enabled: true }).select('target title');
+        res.json({ success: true, data: modules.map(module => ({ ...module.toObject(),
+            learning: state?.modules.find(item => item.id === String(module._id)) || { locked: false, moduleQuiz: quizzes.some(quiz => String(quiz.target) === String(module._id)) ? { passed: false } : null }
+        })) });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Unable to load modules' });
     }
@@ -106,7 +112,10 @@ exports.getModulesByCourse = async (req, res) => {
 
 exports.uploadModuleNotes = async (req, res) => {
     try {
-        if (!mongoose.isValidObjectId(req.params.courseId) || !mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ success: false, error: 'Module not found' });
+        if (!mongoose.isValidObjectId(req.params.courseId) || !mongoose.isValidObjectId(req.params.id)) {
+            if (req.file) await removeNotesFile(req.file.filename);
+            return res.status(404).json({ success: false, error: 'Module not found' });
+        }
         if (!req.file) return res.status(400).json({ success: false, error: 'Choose a PDF, text, or Markdown notes file' });
         const module = await Module.findOne({ _id: req.params.id, course: req.params.courseId }).populate('course');
         if (!module || !module.course) { await fs.unlink(req.file.path).catch(() => {}); return res.status(404).json({ success: false, error: 'Module not found' }); }
@@ -147,6 +156,10 @@ exports.getModuleNotes = async (req, res) => {
         const Enrollment = require('../models/Enrollment');
         const isLearner = req.user.role === 'student' && await Enrollment.exists({ student: req.user.id, course: module.course._id, status: { $in: ['active', 'completed'] } });
         if (!isAdmin && !isOwner && !isLearner) return res.status(403).json({ success: false, error: 'Enroll in this course to view module notes' });
+        if (isLearner) {
+            const access = await require('../utils/learningAccess').getModuleLock(module.course._id, module._id, req.user.id);
+            if (!access || access.locked) return res.status(403).json({ success: false, error: access?.lockReason || 'Module unavailable' });
+        }
         const filename = module.notesStorageFilename;
         if (path.basename(filename) !== filename || !/^module-notes-[a-f0-9-]+\.(pdf|txt|md)$/i.test(filename)) return res.status(404).json({ success: false, error: 'Module notes not found' });
         const target = path.resolve(notesRoot, filename);

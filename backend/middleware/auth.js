@@ -11,7 +11,8 @@ const parseCookies = (cookieHeader) => {
         if (!name) return;
         const value = rest.join('=').trim();
         if (!value) return;
-        list[name] = decodeURIComponent(value);
+        try { list[name] = decodeURIComponent(value); }
+        catch (error) { /* Ignore malformed cookies instead of failing the entire request. */ }
     });
     return list;
 };
@@ -19,8 +20,8 @@ const parseCookies = (cookieHeader) => {
 exports.protect = async (req, res, next) => {
     let token;
     
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        token = req.headers.authorization.split(' ')[1];
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+        token = req.headers.authorization.slice(7);
     } else if (req.headers.cookie) {
         const cookies = parseCookies(req.headers.cookie);
         token = cookies.token;
@@ -32,6 +33,7 @@ exports.protect = async (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, jwtSecret);
+        if (decoded.purpose || typeof decoded.id !== 'string') return res.status(401).json({ success: false, error: 'Not authorized' });
         req.user = await User.findById(decoded.id).select('-password');
         if (!req.user) return res.status(401).json({ success: false, error: 'Not authorized' });
         next();
@@ -51,6 +53,7 @@ exports.optionalProtect = async (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, jwtSecret);
+        if (decoded.purpose || typeof decoded.id !== 'string') return res.status(401).json({ success: false, error: 'Not authorized' });
         req.user = await User.findById(decoded.id).select('-password');
         if (!req.user) return res.status(401).json({ success: false, error: 'Not authorized' });
         next();

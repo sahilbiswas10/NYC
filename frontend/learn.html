@@ -9,12 +9,14 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/aurora.css">
     <script src="js/theme.js"></script>
+    <script src="js/page-transitions.js"></script>
 </head>
-<body class="bg-[var(--bg-color)] text-[var(--foreground)] h-screen flex flex-col md:flex-row overflow-hidden">
+<body class="learning-page bg-[var(--bg-color)] text-[var(--foreground)] h-screen flex flex-col md:flex-row overflow-hidden">
     
     <!-- Video Section -->
-    <div class="flex-1 flex flex-col h-full overflow-y-auto">
+    <div class="learning-main flex-1 flex flex-col h-full overflow-y-auto">
         <div class="p-4 border-b-4 border-[var(--foreground)] flex justify-between items-center gap-4 bg-[var(--primary)] sticky top-0 z-10 brutal-shadow">
             <h1 id="lesson-title" class="text-xl md:text-2xl font-black uppercase tracking-tight">Loading...</h1>
             <a href="course.html" id="back-dashboard-btn" class="bg-[var(--bg-color)] text-[var(--foreground)] brutal-border px-3 py-2 text-sm font-black uppercase hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_0px_var(--foreground)] transition-all flex items-center gap-2">
@@ -35,6 +37,17 @@
                 <p id="text-lesson-status" class="mt-3 text-sm font-bold" aria-live="polite"></p>
             </div>
             <p id="player-error" class="hidden max-w-5xl mx-auto mb-8 bg-red-500 text-white brutal-border p-4 text-sm font-bold" aria-live="polite"></p>
+            <div id="lesson-navigation" class="lesson-navigation hidden max-w-5xl mx-auto mb-6" role="navigation" aria-label="Lesson navigation">
+                <a id="previous-lesson" class="lesson-navigation-link" aria-disabled="true" tabindex="-1">
+                    <i data-lucide="arrow-left" aria-hidden="true"></i>
+                    <span><span class="lesson-navigation-label">Previous lesson</span><span id="previous-lesson-title" class="lesson-navigation-title">First lesson</span></span>
+                </a>
+                <a id="next-lesson" class="lesson-navigation-link lesson-navigation-next" aria-disabled="true" tabindex="-1">
+                    <span><span class="lesson-navigation-label">Next lesson</span><span id="next-lesson-title" class="lesson-navigation-title">Last lesson</span></span>
+                    <i data-lucide="arrow-right" aria-hidden="true"></i>
+                </a>
+            </div>
+            <section id="lesson-quiz" class="feature-panel hidden max-w-5xl mx-auto mb-6" aria-label="Quiz"></section>
             <div class="max-w-5xl mx-auto">
                 <p id="lesson-desc" class="course-copy text-sm md:text-base font-bold p-4 bg-[var(--bg-color)] brutal-border brutal-shadow">Loading description...</p>
             </div>
@@ -42,7 +55,7 @@
     </div>
 
     <!-- Curriculum Sidebar -->
-    <div class="w-full md:w-96 bg-[var(--bg-color)] border-l-8 border-[var(--foreground)] h-full overflow-y-auto flex flex-col z-20">
+    <div class="learning-sidebar w-full md:w-96 bg-[var(--bg-color)] border-l-8 border-[var(--foreground)] h-full overflow-y-auto flex flex-col z-20">
         <div class="p-4 border-b-4 border-[var(--foreground)] bg-[var(--accent)] sticky top-0">
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <h2 class="text-lg font-black uppercase tracking-tight text-white">Course Content</h2>
@@ -58,6 +71,7 @@
     <script src="js/auth.js"></script>
     <script src="js/streaming.js"></script>
     <script src="js/progress.js"></script>
+    <script src="js/quizzes.js"></script>
     <script src="js/player.js"></script>
     <script>lucide.createIcons();</script>
 <script src="js/navbar.js"></script>

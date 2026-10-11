@@ -8,7 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/aurora.css">
     <script src="js/theme.js"></script>
+    <script src="js/page-transitions.js"></script>
 </head>
 <body class="flex flex-col overflow-x-hidden">
 
@@ -54,10 +56,10 @@
         <!-- Right Side: Brutalist Graphic -->
         <div class="flex-1 w-full relative flex justify-center lg:justify-end mt-12 lg:mt-0">
             <!-- Red Background Offset Box -->
-            <div class="relative bg-[var(--bg-color)] brutal-border p-8 md:p-16 brutal-shadow-lg max-w-[500px] w-full aspect-square flex items-center justify-center">
+            <div class="nyc-hero-art relative bg-[var(--bg-color)] brutal-border p-8 md:p-16 brutal-shadow-lg max-w-[500px] w-full aspect-square flex items-center justify-center">
                 
                 <!-- Inner Yellow Box with Rotating Logo/Graphic -->
-                <div class="bg-[var(--primary)] brutal-border w-full h-full flex items-center justify-center relative overflow-hidden group">
+                <div class="nyc-hero-core bg-[var(--primary)] brutal-border w-full h-full flex items-center justify-center relative overflow-hidden group">
                     <!-- Crosshair guidelines -->
                     <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-50">
                         <div class="w-full h-1 border-t-4 border-dashed border-[var(--foreground)]"></div>
@@ -72,7 +74,7 @@
                 </div>
                 
                 <!-- Slanted Marquee Tape -->
-                <div class="absolute -bottom-8 -left-12 right-12 bg-[var(--primary)] brutal-border py-3 transform -rotate-3 overflow-hidden shadow-[4px_4px_0px_0px_var(--foreground)] z-20">
+                <div class="nyc-hero-tape absolute -bottom-8 -left-12 right-12 bg-[var(--primary)] brutal-border py-3 transform -rotate-3 overflow-hidden shadow-[4px_4px_0px_0px_var(--foreground)] z-20">
                     <div class="animate-marquee whitespace-nowrap text-xl font-black uppercase text-black flex items-center gap-8">
                         <span>JUST CODE.</span> <i data-lucide="zap" class="w-5 h-5"></i>
                         <span>NO BS.</span> <i data-lucide="zap" class="w-5 h-5"></i>
@@ -108,7 +110,7 @@
             </p>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div class="nyc-principles grid grid-cols-1 md:grid-cols-3 gap-10">
             <!-- Principle 1 -->
             <div class="bg-[var(--primary)] brutal-border p-8 flex flex-col brutal-shadow group transition-transform hover:-translate-y-2 hover:-translate-x-2 hover:shadow-[12px_12px_0px_0px_var(--foreground)]">
                 <div class="w-16 h-16 bg-white brutal-border rounded-full flex items-center justify-center mb-6 brutal-shadow group-hover:scale-110 transition-transform">

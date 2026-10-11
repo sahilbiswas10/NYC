@@ -8,7 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/aurora.css">
     <script src="js/theme.js"></script>
+    <script src="js/page-transitions.js"></script>
 
     <script>
         const existingToken = localStorage.getItem('token');
@@ -40,7 +42,7 @@
 
     <main class="flex-grow flex items-center justify-center p-6 py-20 relative z-10">
         <div class="bg-[var(--bg-color)] brutal-border p-10 w-full max-w-md brutal-shadow-lg relative">
-            <a href="index.html" class="absolute top-4 right-4 p-2 text-[var(--foreground)] border-2 border-transparent hover:border-black dark:hover:border-white hover:bg-[var(--accent)] transition-all">
+            <a href="index.html" aria-label="Close and return home" class="ag-close-button absolute top-4 right-4">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </a>
             

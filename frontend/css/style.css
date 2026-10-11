@@ -4,6 +4,7 @@
   --primary: #9333ea;
   --accent: #7e22ce;
   --border: #171126;
+  --font-reading: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 html.dark {
@@ -34,14 +35,71 @@ p { line-height: 1.65; overflow-wrap: anywhere; }
 h1, h2, h3, h4 { line-height: 1.15; text-wrap: balance; }
 textarea { line-height: 1.55; overflow-wrap: anywhere; }
 .course-copy { max-width: 68ch; white-space: normal; line-height: 1.75; }
-.course-detail-title { max-width: 18ch; }
+.course-detail-title { max-width: 100%; overflow-wrap: anywhere; }
+.course-preview-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.course-preview-layout > *, .course-access-summary > * { min-width: 0; }
+.course-access-summary .course-price-badge { width: 100%; font-size: 1rem; }
+#login-enroll-link:not(.hidden) { display: block; }
+@media (min-width: 1024px) {
+  .course-preview-layout { grid-template-columns: minmax(0, 2fr) minmax(17rem, 1fr); gap: 2rem; }
+}
+
+/* Keep display headings distinctive and give reading content a quieter voice. */
+body :is(.course-copy, .module-copy, .course-card-description, .course-review-comment, .discussion-message, .nyc-system-dialog-message, #text-lesson-content, #enrollment-message, #demo-status, #course-objectives, textarea) {
+  font-family: var(--font-reading);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  line-height: 1.65;
+}
+body .course-card-description { line-height: 1.55; }
+body :is(.curriculum-lesson-title, .curriculum-player-lesson, .module-notes-filename) { font-family: var(--font-reading); font-weight: 600; text-transform: none; letter-spacing: normal; }
+body .curriculum-player-lesson { font-size: .875rem; }
+body :is(.curriculum-open-lesson, .discussion-reply-button, .course-content-tab) { font-weight: 700; text-transform: none; }
+
+.lesson-navigation { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.lesson-navigation.hidden { display: none; }
+.lesson-navigation-link { display: flex; align-items: center; gap: .65rem; min-width: 0; padding: .8rem 1rem; color: var(--foreground); background: var(--bg-color); border: 2px solid var(--foreground); box-shadow: 3px 3px 0 var(--foreground); }
+.lesson-navigation-link > span { min-width: 0; }
+.lesson-navigation-link > svg { width: 1.1rem; height: 1.1rem; flex: none; }
+.lesson-navigation-label { display: block; font-size: .75rem; font-weight: 800; }
+.lesson-navigation-title { display: -webkit-box; margin-top: .2rem; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; font-family: var(--font-reading); font-size: .875rem; line-height: 1.4; font-weight: 400; }
+.lesson-navigation-next { justify-content: flex-end; text-align: right; border-color: var(--primary); }
+.lesson-navigation-link[href]:hover { background: color-mix(in srgb, var(--primary) 12%, var(--bg-color)); box-shadow: 3px 3px 0 var(--primary); }
+.lesson-navigation-link[aria-disabled="true"] { opacity: .5; box-shadow: none; cursor: default; }
+.learning-main, .learning-sidebar { min-width: 0; min-height: 0; }
+@media (max-width: 767px) {
+  body.learning-page { height: auto; min-height: 100dvh; overflow: visible; }
+  .learning-page .learning-main { flex: none; height: auto; overflow: visible; }
+  .learning-page .learning-main > div:first-child { position: relative; flex-wrap: wrap; }
+  .learning-page .learning-sidebar { height: auto; overflow: visible; border-left: 0; border-top: 4px solid var(--foreground); }
+  .lesson-navigation { gap: .65rem; }
+  .lesson-navigation-link { padding: .7rem; gap: .4rem; }
+}
+
+.lms-nav { gap: 1rem; flex-wrap: wrap; }
+.lms-nav > #nav-links { gap: 1rem; min-width: 0; flex-wrap: wrap; }
+.nav-management { position: relative; }
+.nav-management > summary { display: flex; align-items: center; gap: .4rem; padding: .45rem .6rem; border: 1px solid transparent; cursor: pointer; list-style: none; text-transform: uppercase; }
+.nav-management > summary::-webkit-details-marker { display: none; }
+.nav-management > summary > svg { width: 1rem; height: 1rem; transition: transform 160ms var(--motion-ease); }
+.nav-management[open] > summary > svg { transform: rotate(180deg); }
+.nav-management[open] > summary, .nav-management > summary.is-current { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, var(--bg-color)); }
+.nav-management-links { position: absolute; z-index: 70; top: calc(100% + .75rem); right: 0; display: grid; width: 15rem; max-height: min(22rem, 60dvh); overflow-y: auto; padding: .5rem; background: var(--bg-color); border: 2px solid var(--foreground); box-shadow: 5px 5px 0 var(--primary), 0 12px 28px rgba(8,8,23,.18); animation: interface-fade-in 140ms ease both; }
+.nav-management:not([open]) .nav-management-links { display: none; }
+.nav-management-links a { display: block; padding: .75rem; font-family: var(--font-reading); font-weight: 600; border-left: 3px solid transparent; }
+.nav-management-links a:hover, .nav-management-links a[aria-current="page"] { border-left-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, var(--bg-color)); }
+@media (max-width: 640px) {
+  .nav-management { position: static; }
+  .nav-management-links { top: 100%; left: 1rem; right: 1rem; width: auto; }
+}
 .course-price-badge { width: fit-content; max-width: 100%; padding: .9rem 1.15rem; color: var(--foreground); background: linear-gradient(110deg, rgba(34,211,238,.16), rgba(168,85,247,.18)); border: 2px solid var(--primary); box-shadow: 0 0 24px rgba(34,211,238,.12), 4px 4px 0 var(--foreground); font-size: 1.1rem; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; overflow-wrap: anywhere; }
 .course-card-image { height: 12rem; flex: none; }
-.course-card { position: relative; overflow: hidden; transform-style: preserve-3d; animation: gallery-card-arrive 620ms cubic-bezier(.16,.84,.24,1) backwards; animation-delay: var(--gallery-delay, 0ms); }
+.course-card { position: relative; overflow: hidden; transform-style: preserve-3d; animation: gallery-card-arrive 280ms cubic-bezier(.16,.84,.24,1) backwards; animation-delay: var(--gallery-delay, 0ms); }
 .course-card-image { isolation: isolate; }
 .course-card-image::after { content: ""; position: absolute; z-index: 1; inset: -30% auto -30% -60%; width: 42%; pointer-events: none; opacity: 0; background: linear-gradient(105deg, transparent, rgba(255,255,255,.32), transparent); transform: skewX(-16deg); }
 .course-card:hover .course-card-image::after { opacity: 1; animation: gallery-image-glint 760ms cubic-bezier(.2,.7,.2,1) both; }
-.course-card-image img, .course-card-image > svg { transition: transform 680ms cubic-bezier(.16,.84,.24,1), filter 500ms ease; will-change: transform; }
+.course-card-image img, .course-card-image > svg { transition: transform 240ms cubic-bezier(.16,.84,.24,1), filter 180ms ease; will-change: transform; }
 .course-card:hover .course-card-image img { transform: scale(1.1) translate3d(0,-2px,0) rotate(.7deg); filter: saturate(1.12) contrast(1.03); }
 .course-card:hover .course-card-image > svg { transform: scale(1.12) rotate(5deg); }
 .course-card:hover { box-shadow: 10px 10px 0 var(--primary), 0 18px 42px rgba(34,211,238,.14); }
@@ -87,7 +145,7 @@ textarea { line-height: 1.55; overflow-wrap: anywhere; }
 .completion-check svg { width: .78rem; height: .78rem; stroke-width: 3; }
 .course-completion-banner { display: inline-flex; align-items: center; gap: .5rem; padding: .55rem .8rem; color: #052e16; background: #4ade80; border: 2px solid #15803d; box-shadow: 3px 3px 0 var(--foreground); font-size: .78rem; font-weight: 1000; text-transform: uppercase; }
 .course-completion-banner svg { width: 1.1rem; height: 1.1rem; }
-.module-notes-card, .course-price-badge:not(.hidden) { animation: neon-arrive 420ms cubic-bezier(.2,.8,.22,1) both; }
+.module-notes-card, .course-price-badge:not(.hidden) { animation: neon-arrive 240ms cubic-bezier(.2,.8,.22,1) both; }
 @keyframes neon-arrive { from { opacity: 0; transform: translateY(10px) scale(.985); filter: saturate(.75); } to { opacity: 1; transform: translateY(0) scale(1); filter: saturate(1); } }
 .course-save-toast { position: fixed; z-index: 100; right: max(1.25rem, env(safe-area-inset-right)); bottom: max(1.25rem, env(safe-area-inset-bottom)); width: min(26rem, calc(100vw - 2.5rem)); padding: 1.1rem 1.35rem; color: #080817; background: linear-gradient(115deg, #22d3ee, #a855f7); border: 3px solid var(--foreground); box-shadow: 7px 7px 0 var(--foreground), 0 0 30px rgba(34,211,238,.22); font-size: 1.05rem; font-weight: 1000; text-transform: uppercase; opacity: 0; transform: translateY(18px) scale(.97); transition: opacity 220ms ease, transform 260ms cubic-bezier(.2,.8,.2,1); }
 .course-save-toast.is-visible { opacity: 1; transform: translateY(0) scale(1); }
@@ -155,13 +213,8 @@ textarea { line-height: 1.55; overflow-wrap: anywhere; }
 
 html { scroll-behavior: smooth; }
 
-@view-transition { navigation: auto; }
-::view-transition-old(root) { animation: cosmic-page-exit 190ms ease-in both; }
-::view-transition-new(root) { animation: cosmic-page-enter 350ms cubic-bezier(.18,.82,.22,1) both; }
-
-@keyframes cosmic-page-exit { to { opacity: 0; filter: blur(6px); transform: scale(.985); } }
-@keyframes cosmic-page-enter { from { opacity: 0; filter: blur(8px); transform: scale(1.015); } to { opacity: 1; filter: blur(0); transform: scale(1); } }
-
+/* Use the existing page leave/entrance pair once. Native document snapshots
+   would otherwise replay a second transition over the already-faded page. */
 html.page-leaving body { opacity: 0; filter: blur(4px); transform: scale(.99); transition: opacity 130ms ease, filter 130ms ease, transform 130ms ease; }
 
 a, button, input, select, textarea, [role="button"] {
@@ -385,8 +438,8 @@ html.dark .course-price-badge { border-color: #22d3ee; box-shadow: 0 0 22px rgba
 html.dark { color-scheme: dark; }
 html { scroll-behavior: smooth; scroll-padding-top: 6rem; }
 body {
-  transition: background-color 520ms var(--motion-ease), color 420ms var(--motion-ease);
-  animation: interface-fade-in 520ms var(--motion-ease) both;
+  transition: background-color 260ms var(--motion-ease), color 220ms var(--motion-ease);
+  animation: interface-fade-in 260ms var(--motion-ease) both;
 }
 body::before {
   content: "";
@@ -418,20 +471,20 @@ nav {
   background-color: color-mix(in srgb, var(--bg-color) 88%, transparent);
   -webkit-backdrop-filter: blur(18px) saturate(1.35);
   backdrop-filter: blur(18px) saturate(1.35);
-  animation: nav-drop 680ms var(--motion-spring) both;
+  animation: interface-fade-in 180ms var(--motion-ease) both;
 }
 nav.lms-nav { box-shadow: 0 10px 34px rgba(8,8,23,.08), 0 1px 0 rgba(34,211,238,.24); }
 nav #nav-links > a { position: relative; }
-nav #nav-links > a::after { content: ""; position: absolute; right: 0; bottom: -.42rem; left: 0; height: 2px; background: linear-gradient(90deg,var(--motion-violet),var(--motion-cyan)); transform: scaleX(0); transform-origin: left; transition: transform 320ms var(--motion-spring); }
+nav #nav-links > a::after { content: ""; position: absolute; right: 0; bottom: -.42rem; left: 0; height: 2px; background: linear-gradient(90deg,var(--motion-violet),var(--motion-cyan)); transform: scaleX(0); transform-origin: left; transition: transform 180ms var(--motion-spring); }
 nav #nav-links > a:hover::after, nav #nav-links > a:focus-visible::after { transform: scaleX(1); }
-nav #theme-toggle { overflow: hidden; box-shadow: 0 0 0 rgba(34,211,238,0); transition: transform 420ms var(--motion-spring), box-shadow 360ms var(--motion-ease), background-color 360ms var(--motion-ease); }
+nav #theme-toggle { overflow: hidden; box-shadow: 0 0 0 rgba(34,211,238,0); transition: transform 220ms var(--motion-spring), box-shadow 180ms var(--motion-ease), background-color 180ms var(--motion-ease); }
 nav #theme-toggle:hover { box-shadow: 0 0 24px rgba(34,211,238,.26), 3px 3px 0 var(--foreground); }
-nav #theme-toggle svg { transition: transform 520ms var(--motion-spring); }
+nav #theme-toggle svg { transition: transform 260ms var(--motion-spring); }
 nav #theme-toggle:hover svg { transform: rotate(90deg) scale(1.13); }
 
 a, button, input, select, textarea, [role="button"] {
   transition-property: color, background-color, border-color, box-shadow, transform, translate, scale, filter, opacity;
-  transition-duration: 360ms;
+  transition-duration: 180ms;
   transition-timing-function: var(--motion-ease);
 }
 a[href]:hover, button:not(:disabled):hover, [role="button"]:hover { filter: saturate(1.12) brightness(1.035); }
@@ -439,18 +492,18 @@ button:not(:disabled):active, a[href]:active, [role="button"]:active { scale: .9
 :focus-visible { outline: 3px solid var(--motion-cyan) !important; outline-offset: 3px; box-shadow: 0 0 0 5px color-mix(in srgb, var(--motion-cyan) 20%, transparent), var(--motion-glow); }
 ::selection { color: #080817; background: #67e8f9; }
 
-.brutal-border { transition: border-color 360ms var(--motion-ease), box-shadow 420ms var(--motion-ease), filter 360ms var(--motion-ease); }
-.brutal-shadow, .brutal-shadow-lg { transition: transform 420ms var(--motion-spring), box-shadow 420ms var(--motion-ease), filter 360ms var(--motion-ease); }
+.brutal-border { transition: border-color 180ms var(--motion-ease), box-shadow 220ms var(--motion-ease), filter 180ms var(--motion-ease); }
+.brutal-shadow, .brutal-shadow-lg { transition: transform 220ms var(--motion-spring), box-shadow 220ms var(--motion-ease), filter 180ms var(--motion-ease); }
 .brutal-shadow:hover, .brutal-shadow-lg:hover { filter: brightness(1.045) drop-shadow(0 0 12px rgba(168,85,247,.12)); }
-.course-card, .curriculum-module, .discussion-post, .course-review-card, .recruiter-mark, .certificate-verification-card { transition: transform 460ms var(--motion-spring), box-shadow 460ms var(--motion-ease), border-color 360ms var(--motion-ease), background-color 420ms var(--motion-ease); }
+.course-card, .curriculum-module, .discussion-post, .course-review-card, .recruiter-mark, .certificate-verification-card { transition: transform 220ms var(--motion-spring), box-shadow 220ms var(--motion-ease), border-color 180ms var(--motion-ease), background-color 220ms var(--motion-ease); }
 .curriculum-module:hover, .discussion-post:hover, .course-review-card:hover { box-shadow: 7px 7px 0 var(--foreground), 0 0 28px rgba(168,85,247,.12); }
-.curriculum-module-summary { transition: background-color 300ms var(--motion-ease), color 300ms var(--motion-ease); }
+.curriculum-module-summary { transition: background-color 160ms var(--motion-ease), color 160ms var(--motion-ease); }
 .curriculum-module-summary:hover { background: color-mix(in srgb, var(--primary) 10%, transparent); }
-.course-content-tab, .course-filter-trigger, .course-filter-apply, .course-review-submit, .course-filter-reset, .certificate-toolbar-link, .certificate-print-button { transition: transform 380ms var(--motion-spring), box-shadow 380ms var(--motion-ease), filter 320ms var(--motion-ease), background-color 320ms var(--motion-ease); }
+.course-content-tab, .course-filter-trigger, .course-filter-apply, .course-review-submit, .course-filter-reset, .certificate-toolbar-link, .certificate-print-button { transition: transform 180ms var(--motion-spring), box-shadow 180ms var(--motion-ease), filter 180ms var(--motion-ease), background-color 180ms var(--motion-ease); }
 .course-content-tab:hover, .course-filter-trigger:hover, .course-filter-apply:hover, .course-review-submit:hover, .certificate-toolbar-link:hover, .certificate-print-button:hover { box-shadow: 0 0 0 1px var(--motion-cyan), 0 0 24px rgba(34,211,238,.18), 5px 5px 0 var(--foreground); }
 
 input, select, textarea {
-  transition: border-color 300ms var(--motion-ease), box-shadow 360ms var(--motion-ease), background-color 360ms var(--motion-ease), color 300ms var(--motion-ease);
+  transition: border-color 160ms var(--motion-ease), box-shadow 180ms var(--motion-ease), background-color 180ms var(--motion-ease), color 160ms var(--motion-ease);
 }
 input:focus, select:focus, textarea:focus { border-color: var(--motion-cyan) !important; box-shadow: 0 0 0 3px rgba(34,211,238,.16), 0 0 24px rgba(34,211,238,.14); }
 table tbody tr { transition: background-color 240ms ease, color 240ms ease; }
@@ -468,7 +521,7 @@ table tbody tr:hover { background-color: color-mix(in srgb, var(--primary) 8%, t
 }
 .fixed.inset-0.z-50 > :first-child {
   transform-origin: center;
-  transition: opacity 300ms var(--motion-ease), transform 420ms var(--motion-spring), box-shadow 420ms var(--motion-ease);
+  transition: opacity 160ms var(--motion-ease), transform 220ms var(--motion-spring), box-shadow 220ms var(--motion-ease);
 }
 .fixed.inset-0.z-50.hidden > :first-child { opacity: 0; transform: translate3d(0,18px,0) scale(.96) rotateX(3deg); }
 @starting-style {
@@ -476,10 +529,10 @@ table tbody tr:hover { background-color: color-mix(in srgb, var(--primary) 8%, t
   .fixed.inset-0.z-50:not(.hidden) > :first-child { opacity: 0; transform: translate3d(0,22px,0) scale(.94) rotateX(4deg); }
 }
 
-dialog::backdrop { background: rgba(5,7,20,.76); -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0); transition: background-color 300ms ease, backdrop-filter 400ms ease; }
-dialog[open]::backdrop { -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2); animation: modal-backdrop-in 360ms ease both; }
-.course-filter-dialog[open] { animation: dialog-pop-in 420ms var(--motion-spring) both; }
-.course-filter-dialog-panel { animation: dialog-panel-in 480ms var(--motion-spring) both; }
+dialog::backdrop { background: rgba(5,7,20,.76); -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0); transition: background-color 160ms ease, backdrop-filter 220ms ease; }
+dialog[open]::backdrop { -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2); animation: modal-backdrop-in 180ms ease both; }
+.course-filter-dialog[open] { animation: dialog-pop-in 220ms var(--motion-spring) both; }
+.course-filter-dialog-panel { animation: dialog-panel-in 240ms var(--motion-spring) both; }
 @keyframes modal-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes dialog-pop-in { from { opacity: 0; transform: translateY(18px) scale(.975); filter: blur(5px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
 @keyframes dialog-panel-in { from { opacity: 0; transform: translateY(24px) scale(.95) rotateX(3deg); } to { opacity: 1; transform: translateY(0) scale(1) rotateX(0); } }
@@ -501,27 +554,64 @@ dialog[open]::backdrop { -webkit-backdrop-filter: blur(10px) saturate(1.2); back
 .nyc-system-dialog-actions button { min-width: 6rem; padding: .7rem 1rem; color: var(--foreground); background: var(--bg-color); border: 2px solid var(--foreground); box-shadow: 3px 3px 0 var(--foreground); font-weight: 900; text-transform: uppercase; }
 .nyc-system-dialog-actions button[data-confirm] { color: #080817; background: linear-gradient(110deg,var(--motion-violet),var(--motion-cyan)); }
 .nyc-system-dialog-actions button:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--foreground), 0 0 20px rgba(34,211,238,.18); }
-.nyc-system-dialog .nyc-system-dialog-panel { animation: dialog-panel-in 440ms var(--motion-spring) both; }
+.nyc-system-dialog .nyc-system-dialog-panel { animation: dialog-panel-in 240ms var(--motion-spring) both; }
 .nyc-system-dialog.is-closing { animation: modal-backdrop-out 180ms ease both; }
 .nyc-system-dialog.is-closing .nyc-system-dialog-panel { animation: dialog-panel-out 180ms ease both; }
 @keyframes modal-backdrop-out { to { opacity: 0; } }
 @keyframes dialog-panel-out { to { opacity: 0; transform: translateY(10px) scale(.97); filter: blur(3px); } }
 
 .course-save-toast { border-color: transparent; background: linear-gradient(var(--bg-color),var(--bg-color)) padding-box, linear-gradient(110deg,var(--motion-violet),var(--motion-cyan),var(--motion-pink)) border-box; background-size: auto, 220% 220%; animation: toast-gradient 4s ease infinite, toast-float 4.5s ease-in-out infinite; }
-.course-save-toast.is-visible { animation: toast-gradient 4s ease infinite, toast-float 4.5s ease-in-out infinite, toast-arrive 520ms var(--motion-spring) both; }
+.course-save-toast.is-visible { animation: toast-gradient 4s ease infinite, toast-float 4.5s ease-in-out infinite, toast-arrive 260ms var(--motion-spring) both; }
 .course-save-toast--error { color: #fff; border-color: transparent; background: linear-gradient(110deg,#dc2626,#be123c) padding-box, linear-gradient(110deg,#fb7185,#f97316) border-box; }
 @keyframes toast-gradient { 0%,100% { background-position: 0 0,0% 50%; } 50% { background-position: 0 0,100% 50%; } }
 @keyframes toast-float { 0%,100% { box-shadow: 7px 7px 0 var(--foreground), 0 0 22px rgba(34,211,238,.16); } 50% { box-shadow: 7px 7px 0 var(--foreground), 0 0 34px rgba(168,85,247,.24); } }
 @keyframes toast-arrive { from { opacity: 0; transform: translateY(20px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
-.motion-pop-in { animation: ui-pop-in 520ms var(--motion-spring) both; animation-delay: var(--motion-delay, 0ms); }
+.motion-pop-in { animation: ui-pop-in 260ms var(--motion-spring) both; animation-delay: var(--motion-delay, 0ms); }
 @keyframes ui-pop-in { from { opacity: 0; transform: translate3d(0,16px,0) scale(.985); } to { opacity: 1; transform: translate3d(0,0,0) scale(1); } }
-.motion-ready .motion-reveal { transition-duration: 680ms; transition-timing-function: var(--motion-spring); }
+.motion-ready .motion-reveal { transition-duration: 280ms; transition-timing-function: var(--motion-spring); }
 .motion-ready .motion-reveal.is-visible { filter: none; }
 h1.text-shadow-brutal { animation: title-energy 6s ease-in-out infinite; }
 @keyframes title-energy { 0%,100% { filter: drop-shadow(0 0 0 rgba(34,211,238,0)); } 50% { filter: drop-shadow(0 0 12px rgba(34,211,238,.2)); } }
-html.page-leaving body { opacity: 0; filter: blur(9px); transform: scale(.988); transition: opacity 250ms cubic-bezier(.65,0,.84,0), filter 260ms ease-in, transform 260ms var(--motion-ease); }
+html.page-leaving body { opacity: 0; filter: blur(9px); transform: scale(.988); transition: opacity 130ms cubic-bezier(.65,0,.84,0), filter 130ms ease-in, transform 130ms var(--motion-ease); }
 
 @media (max-width: 640px) {
   .nyc-system-dialog-actions { flex-direction: column-reverse; }
   .nyc-system-dialog-actions button { width: 100%; }
 }
+
+/* Quizzes and the in-app notification inbox use the existing theme tokens. */
+.feature-page { width: min(100% - 2rem, 1000px); margin: 2rem auto; }
+.feature-panel { min-width: 0; padding: clamp(1rem, 3vw, 1.6rem); background: var(--bg-color); color: var(--foreground); border: 2px solid var(--foreground); box-shadow: 4px 4px 0 var(--foreground); margin-block: 1.2rem; }
+.feature-panel h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: .6rem; }
+.feature-panel p, .feature-panel label, .quiz-question, .notification-item time { font-family: var(--font-reading, system-ui, sans-serif); font-weight: 400; text-transform: none; line-height: 1.6; overflow-wrap: anywhere; }
+.feature-panel p { margin-block: .65rem; white-space: pre-wrap; }
+.feature-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1rem; }
+.feature-button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; padding: .6rem .9rem; border: 2px solid var(--foreground); background: var(--bg-color); color: var(--foreground); font: 700 .85rem/1.3 system-ui, sans-serif; text-decoration: none; cursor: pointer; transition: background-color 120ms, transform 120ms; }
+.feature-button:hover { background: var(--primary); transform: translateY(-1px); }
+.feature-button:disabled, [aria-disabled="true"].feature-button, .curriculum-player-lesson[aria-disabled="true"] { opacity: .6; cursor: not-allowed; transform: none; }
+.feature-button:focus-visible, .quiz-option:focus-within, .notification-bell:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.feature-panel input:not([type="radio"]):not([type="checkbox"]), .feature-panel textarea { display: block; width: 100%; margin-block: .4rem 1rem; border: 2px solid var(--foreground); padding: .65rem; background: var(--bg-color); color: var(--foreground); font: 400 1rem/1.5 system-ui, sans-serif; }
+.feature-panel textarea { min-height: 6rem; resize: vertical; }
+.feature-panel input[type="checkbox"], .feature-panel input[type="radio"] { accent-color: var(--primary); width: 1.1rem; height: 1.1rem; flex-shrink: 0; }
+.quiz-question { border: 1px solid color-mix(in srgb, var(--foreground) 40%, transparent); padding: 1rem; margin-block: 1.25rem; min-width: 0; }
+.quiz-question legend { padding-inline: .4rem; font-size: 1rem; font-weight: 650; white-space: pre-wrap; max-width: 100%; }
+.quiz-option { display: flex; align-items: flex-start; gap: .7rem; padding: .65rem; cursor: pointer; border: 1px solid transparent; }
+.quiz-option input { margin-top: .25rem; }
+.quiz-option:has(input:checked) { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, transparent); }
+.quiz-result, .quiz-feedback, .module-lock-message { font-size: .9rem; line-height: 1.5; }
+.quiz-result.is-passed { color: #15803d; font-weight: 700; }
+.dark .quiz-result.is-passed { color: #86efac; }
+.module-test-link { margin-top: 1rem; }
+.module-lock-message:empty { display: none; }
+.notification-bell { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; flex-shrink: 0; color: var(--foreground); background: var(--bg-color); border: 2px solid var(--foreground); }
+.notification-badge { position: absolute; top: -8px; right: -8px; min-width: 19px; padding: 2px 4px; border-radius: 10px; color: white; background: #b91c1c; font: 700 10px/1.3 system-ui, sans-serif; text-align: center; }
+.notification-badge[hidden] { display: none; }
+.notification-item.is-unread { border-left: 6px solid var(--primary); }
+.notification-item time { font-size: .8rem; opacity: .8; }
+.course-announcement { margin-block: 1.5rem; }
+.quiz-question-editor { border: 1px solid var(--foreground); padding: 1rem; margin-block: 1.5rem; min-width: 0; }
+.quiz-question-editor legend { padding-inline: .5rem; font-weight: 750; }
+.quiz-settings { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 2rem; }
+.quiz-check { display: flex; align-items: center; gap: .6rem; }
+.feature-primary { background: var(--primary); }
+.feature-panel input[type="file"] { max-width: 100%; font-size: .8rem; }

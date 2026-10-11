@@ -43,6 +43,12 @@ CourseSchema.pre('deleteOne', { document: true, query: false }, async function()
     const mediaIds = lessons.map((lesson) => lesson.media?.toString()).filter(Boolean);
     if (this.demoVideo) mediaIds.push(this.demoVideo.toString());
     this.$locals.mediaIds = [...new Set(mediaIds)];
+    // deleteMany bypasses Module's document cleanup hook, so retain notes for post-delete cleanup.
+    const modules = await Module.find({ course: this._id }).select('notesStorageFilename');
+    this.$locals.notesStorageFilenames = [...new Set(modules.map((module) => module.notesStorageFilename).filter(Boolean))];
+    await require('./QuizResult').deleteMany({ course: this._id });
+    await require('./Quiz').deleteMany({ course: this._id });
+    await require('./Notification').deleteMany({ course: this._id });
     await LessonProgress.deleteMany({ course: this._id });
     await Enrollment.deleteMany({ course: this._id });
     await DiscussionPost.deleteMany({ course: this._id });
@@ -55,14 +61,23 @@ CourseSchema.pre('deleteOne', { document: true, query: false }, async function()
 
 CourseSchema.post('deleteOne', { document: true, query: false }, async function() {
     const Media = require('./Media');
+    const Module = require('./Module');
+    const fs = require('fs/promises');
     const { cleanupMedia } = require('../utils/mediaCleanup');
     for (const mediaId of this.$locals.mediaIds || []) {
         const media = await Media.findById(mediaId);
         if (media) await cleanupMedia(media);
     }
+    const notesRoot = path.resolve(__dirname, '../../storage/module-notes');
+    for (const notesName of this.$locals.notesStorageFilenames || []) {
+        if (path.basename(notesName) !== notesName || !/^module-notes-[a-f0-9-]+\.(pdf|txt|md)$/i.test(notesName)) continue;
+        if (await Module.exists({ notesStorageFilename: notesName })) continue;
+        const notesPath = path.resolve(notesRoot, notesName);
+        const relative = path.relative(notesRoot, notesPath);
+        if (relative && !relative.startsWith('..') && !path.isAbsolute(relative)) await fs.unlink(notesPath).catch(() => {});
+    }
     const filename = this.thumbnailFilename;
     if (filename && path.basename(filename) === filename && /^course-thumbnail-[a-f0-9-]+\.(jpg|jpeg|png|webp)$/i.test(filename)) {
-        const fs = require('fs/promises');
         const thumbnailRoot = path.resolve(__dirname, '../../storage/course-thumbnails');
         const imagePath = path.resolve(thumbnailRoot, filename);
         const relative = path.relative(thumbnailRoot, imagePath);

@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <span class="font-black text-sm">${Number(course.totalStudents) || 0} STUDENTS</span>
                 </div>
                 <h2 class="text-2xl font-black uppercase mb-3">${instructorEscape(course.title)}</h2>
-                <p class="font-bold flex-grow mb-5">${instructorEscape(course.shortDescription || course.description || 'Add a description in the course editor.')}</p>
+                <p class="course-copy flex-grow mb-5">${instructorEscape(course.shortDescription || course.description || 'Add a description in the course editor.')}</p>
                 <div class="flex flex-wrap gap-2">
                     <a class="${instructorButtonClass}" href="edit-course.html?id=${encodeURIComponent(course._id)}">EDIT COURSE</a>
                     <a class="${instructorButtonClass}" href="../course.html?course=${encodeURIComponent(course._id)}">PREVIEW</a>

@@ -31,7 +31,14 @@ const processMedia = async (mediaId, { signal } = {}) => {
 
         const originalPath = path.resolve(media.originalPath || '');
         const originalRelative = path.relative(originalsRoot, originalPath);
-        if (!media.originalPath || originalRelative.startsWith(`..${path.sep}`) || originalRelative === '..' || path.isAbsolute(originalRelative)) {
+        if (!media.originalPath || !originalRelative || originalRelative.startsWith(`..${path.sep}`) || originalRelative === '..' || path.isAbsolute(originalRelative)) {
+            throw new Error('Original media path is invalid');
+        }
+        const [realOriginalsRoot, realOriginalPath] = await Promise.all([
+            fs.promises.realpath(originalsRoot), fs.promises.realpath(originalPath)
+        ]);
+        const realRelative = path.relative(realOriginalsRoot, realOriginalPath);
+        if (!realRelative || realRelative === '..' || realRelative.startsWith(`..${path.sep}`) || path.isAbsolute(realRelative)) {
             throw new Error('Original media path is invalid');
         }
         await fs.promises.access(originalPath, fs.constants.R_OK);
@@ -47,9 +54,11 @@ const processMedia = async (mediaId, { signal } = {}) => {
         const probedDuration = Number(metadata.format?.duration);
         if (Number.isFinite(probedDuration) && probedDuration > 0) media.duration = probedDuration;
 
-        hlsDir = path.resolve(hlsRoot, media._id.toString());
+        const mediaId = String(media._id);
+        if (!/^[a-f\d]{24}$/i.test(mediaId)) throw new Error('HLS output path is invalid');
+        hlsDir = path.resolve(hlsRoot, mediaId);
         const relativeHls = path.relative(hlsRoot, hlsDir);
-        if (!relativeHls || relativeHls.startsWith(`..${path.sep}`) || path.isAbsolute(relativeHls)) {
+        if (!relativeHls || relativeHls === '..' || relativeHls.startsWith(`..${path.sep}`) || path.isAbsolute(relativeHls)) {
             throw new Error('HLS output path is invalid');
         }
 
@@ -90,6 +99,10 @@ const processMedia = async (mediaId, { signal } = {}) => {
             command = ffmpeg(originalPath)
                 .outputOptions(...outputOptions)
                 .output(manifestPath)
+                .on('start', () => {
+                    // A cancellation before spawn cannot kill an unstarted command.
+                    if (signal?.aborted) abort();
+                })
                 .on('progress', (progress) => {
                     if (!Number.isFinite(progress.percent)) return;
                     const now = Date.now();
@@ -110,7 +123,7 @@ const processMedia = async (mediaId, { signal } = {}) => {
                         const segments = manifest.split(/\r?\n/).filter((line) => line && !line.startsWith('#'));
                         if (!segments.length) throw new Error('FFmpeg produced an empty HLS manifest');
                         for (const filename of segments) {
-                            if (path.basename(filename) !== filename) throw new Error('FFmpeg produced an invalid segment path');
+                            if (!/^segment_\d{5,}\.ts$/.test(filename)) throw new Error('FFmpeg produced an invalid segment path');
                             await fs.promises.access(path.join(hlsDir, filename), fs.constants.R_OK);
                         }
                         ensureNotCancelled();
@@ -143,7 +156,7 @@ const processMedia = async (mediaId, { signal } = {}) => {
         }
         const failedHlsDir = path.resolve(hlsRoot, media._id.toString());
         const failedRelative = path.relative(hlsRoot, failedHlsDir);
-        if (failedRelative && !failedRelative.startsWith(`..${path.sep}`) && !path.isAbsolute(failedRelative)) {
+        if (/^[a-f\d]{24}$/i.test(String(media._id)) && failedRelative && failedRelative !== '..' && !failedRelative.startsWith(`..${path.sep}`) && !path.isAbsolute(failedRelative)) {
             await fs.promises.rm(failedHlsDir, { recursive: true, force: true }).catch(() => {});
         }
         throw error;

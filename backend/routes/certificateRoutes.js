@@ -14,7 +14,7 @@ router.get('/verify/:certificateId', async (req, res) => {
             .populate('student', 'name')
             .populate('course', 'title')
             .lean();
-        if (!enrollment || !enrollment.certificateIssuedAt) {
+        if (!enrollment || enrollment.status !== 'completed' || !enrollment.certificateIssuedAt) {
             return res.status(404).json({ success: false, error: 'Certificate not found' });
         }
 

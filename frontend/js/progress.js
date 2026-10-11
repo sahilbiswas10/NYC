@@ -54,6 +54,8 @@ class ProgressTracker {
             this.lastSavedTime = currentTime;
             if (response.data?.completed) {
                 window.dispatchEvent(new CustomEvent('lesson:completed', { detail: { lessonId: this.lessonId } }));
+            } else if (response.data?.contentCompleted) {
+                window.dispatchEvent(new CustomEvent('lesson:content-completed', { detail: { lessonId: this.lessonId } }));
             } else {
                 window.dispatchEvent(new CustomEvent('lesson:progress-saved', {
                     detail: { lessonId: this.lessonId, percentage: response.data?.percentage }
@@ -91,6 +93,8 @@ class ProgressTracker {
             this.lastSavedTime = this.video.duration;
             if (response.data?.completed) {
                 window.dispatchEvent(new CustomEvent('lesson:completed', { detail: { lessonId: this.lessonId } }));
+            } else if (response.data?.contentCompleted) {
+                window.dispatchEvent(new CustomEvent('lesson:content-completed', { detail: { lessonId: this.lessonId } }));
             } else {
                 throw new Error('The server did not confirm lesson completion');
             }

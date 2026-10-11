@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
 const Enrollment = require('../models/Enrollment');
+const { recalculateEnrollment } = require('../utils/courseProgress');
 const { getCourses, getCourseById, createCourse, updateCourse, deleteCourse, uploadCourseThumbnail, getCourseThumbnail } = require('../controllers/courseController');
 const { protect, optionalProtect, authorize } = require('../middleware/auth');
 const thumbnailUpload = require('../middleware/courseThumbnailUpload');
@@ -34,9 +35,13 @@ router.get('/:id/certificate', protect, async (req, res) => {
         let enrollment = await Enrollment.findOne({
             student: req.user._id,
             course: req.params.id,
-            status: 'completed'
+            status: { $in: ['active', 'completed'] }
         }).populate('course', 'title');
         if (!enrollment || !enrollment.course) {
+            return res.status(403).json({ success: false, error: 'Complete all required lessons to receive your certificate' });
+        }
+        await recalculateEnrollment(enrollment);
+        if (enrollment.status !== 'completed') {
             return res.status(403).json({ success: false, error: 'Complete all required lessons to receive your certificate' });
         }
 
@@ -63,6 +68,9 @@ router.get('/:id/certificate', protect, async (req, res) => {
                 }
             );
             enrollment = await Enrollment.findById(enrollment._id).populate('course', 'title');
+            if (!enrollment || enrollment.status !== 'completed' || !enrollment.course) {
+                return res.status(403).json({ success: false, error: 'Complete all required lessons to receive your certificate' });
+            }
         }
 
         if (!enrollment?.certificateId) {

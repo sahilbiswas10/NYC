@@ -1,14 +1,10 @@
-const fs = require('fs');
-const path = require('path');
-
-async function test() {
-    console.log("Creating dummy video...");
-    fs.writeFileSync('dummy.mp4', 'dummy data');
-
-    console.log("Mocking API flow...");
-    // Since we don't want to actually test an HTTP server with a real dummy file via fetch here,
-    // I will just check if the database models work.
-    
-    // It's better to just summarize the results.
-}
-test();
+// Run only against a temporary app, database and storage; never the configured LMS.
+const { spawn } = require('node:child_process');
+const path = require('node:path');
+const child = spawn(process.execPath, ['--test', path.join(__dirname, 'tests/e2e.test.js')], {
+    cwd: __dirname,
+    env: process.env,
+    stdio: 'inherit'
+});
+child.on('error', (error) => { console.error(error.message); process.exitCode = 1; });
+child.on('exit', (code) => { process.exitCode = code === 0 ? 0 : 1; });

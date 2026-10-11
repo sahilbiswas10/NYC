@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
     const courseId = params.get('course');
     const lessonId = params.get('lesson');
+    const moduleTestId = params.get('module');
     const resumeTime = Math.max(0, Number(params.get('time')) || 0);
     const showPlayerError = (message) => {
         const error = document.getElementById('player-error');
@@ -33,26 +34,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         const moduleResponse = await window.api.courses.getModules(courseId);
         const modules = moduleResponse.data || [];
         const completedLessonIds = new Set();
+        let learningModules = modules.map(module => ({ id: String(module._id), ...module.learning }));
+        let courseCompleted = null;
         if (user?.role === 'student') {
             try {
                 const progressResponse = await window.api.progress.getCourseLessons(courseId);
+                learningModules = progressResponse.data.modules || learningModules;
                 (progressResponse.data.completedLessonIds || []).forEach((id) => completedLessonIds.add(String(id)));
+                if (typeof progressResponse.data.courseCompleted === 'boolean') courseCompleted = progressResponse.data.courseCompleted;
             } catch (error) {
                 console.error('Unable to load lesson completion state:', error);
             }
         }
         let activeLesson = null;
+        const orderedLessons = [];
         const sections = [];
         for (let moduleIndex = 0; moduleIndex < modules.length; moduleIndex++) {
             const module = modules[moduleIndex];
             const response = await window.api.modules.getLessons(module._id);
             const lessons = response.data || [];
+            orderedLessons.push(...lessons);
             const section = document.createElement('details');
             section.className = 'curriculum-module';
             section.dataset.playerModule = module._id;
-            section.open = lessons.some((lesson) => String(lesson._id) === String(lessonId)) || (moduleIndex === 0 && !lessonId);
-            const completedCount = lessons.filter((lesson) => completedLessonIds.has(String(lesson._id))).length;
-            const moduleComplete = lessons.length > 0 && completedCount === lessons.length;
+            section.open = String(module._id) === moduleTestId || lessons.some((lesson) => String(lesson._id) === String(lessonId)) || (moduleIndex === 0 && !lessonId && !moduleTestId);
+            const requiredLessons = lessons.filter((lesson) => lesson.isRequired !== false || lesson.hasQuiz);
+            const completedCount = requiredLessons.filter((lesson) => completedLessonIds.has(String(lesson._id))).length;
+            const moduleComplete = module.learning?.completed === true;
             const summary = document.createElement('summary');
             summary.className = 'curriculum-module-summary';
             const heading = document.createElement('span');
@@ -63,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const count = document.createElement('span');
             count.className = 'curriculum-module-count';
             count.dataset.moduleCount = '';
-            count.textContent = `${completedCount}/${lessons.length}`;
+            count.textContent = `${completedCount}/${requiredLessons.length}`;
             count.hidden = user?.role !== 'student';
             const moduleCheck = document.createElement('span');
             moduleCheck.className = `completion-check${moduleComplete ? '' : ' hidden'}`;
@@ -96,9 +104,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 link.className = 'curriculum-player-lesson';
                 if (String(lesson._id) === String(lessonId)) link.classList.add('is-active');
                 link.dataset.playerLesson = lesson._id;
+                link.dataset.lessonRequired = String(lesson.isRequired !== false || lesson.hasQuiz);
+                link.dataset.destination = link.href;
+                if (module.learning?.locked) { link.removeAttribute('href'); link.setAttribute('aria-disabled', 'true'); link.title = module.learning.lockReason; }
                 const label = document.createElement('span');
                 label.className = 'curriculum-player-lesson-label';
-                label.textContent = `LESSON ${moduleIndex + 1}.${lessonIndex + 1} · ${lesson.title}${lesson.type ? ` · ${lesson.type}` : ''}`;
+                label.textContent = `Lesson ${moduleIndex + 1}.${lessonIndex + 1} · ${lesson.title}${lesson.type ? ` · ${lesson.type}` : ''}`;
                 link.appendChild(label);
                 if (completedLessonIds.has(String(lesson._id))) {
                     const lessonCheck = document.createElement('span');
@@ -112,9 +123,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 item.appendChild(link); list.appendChild(item);
             });
             section.append(summary);
+            const lockMessage = document.createElement('p'); lockMessage.className = 'module-lock-message';
+            lockMessage.textContent = module.learning?.lockReason || ''; content.appendChild(lockMessage);
+            if (module.learning?.moduleQuiz) {
+                const test = document.createElement('a'); test.className = 'feature-button module-test-link';
+                test.href = `?course=${encodeURIComponent(courseId)}&module=${module._id}`;
+                test.dataset.destination = test.href;
+                test.dataset.moduleTest = module._id;
+                test.textContent = module.learning.moduleQuiz.passed ? '✓ Module test passed' : 'Take module test';
+                if (module.learning.locked) { test.removeAttribute('href'); test.setAttribute('aria-disabled', 'true'); }
+                // Appended after lessons below.
+                section._testLink = test;
+            }
             if (module.notesOriginalFilename) {
                 const notesButton = document.createElement('button'); notesButton.type = 'button'; notesButton.dataset.moduleNotes = module._id;
                 notesButton.className = 'module-notes-link mb-4';
+                notesButton.disabled = module.learning?.locked === true;
                 notesButton.setAttribute('aria-label', `View notes for module ${moduleIndex + 1}`);
                 notesButton.innerHTML = `<span class="module-notes-label">MODULE ${moduleIndex + 1} NOTES</span><span class="module-notes-filename">${String(module.notesOriginalFilename).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))}</span><span class="module-notes-action">VIEW NOTES</span>`;
                 content.appendChild(notesButton);
@@ -126,6 +150,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 empty.textContent = 'No lessons in this module yet.';
                 content.appendChild(empty);
             }
+            if (section._testLink) content.appendChild(section._testLink);
             section.appendChild(content);
             sections.push(section);
         }
@@ -133,10 +158,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         const updateCompletionUI = (completedId) => {
             if (completedId) completedLessonIds.add(String(completedId));
             curriculumContainer.querySelectorAll('[data-player-module]').forEach((moduleElement) => {
+                const learning = learningModules.find(item => item.id === moduleElement.dataset.playerModule);
+                moduleElement.querySelectorAll('[data-destination]').forEach(link => {
+                    if (learning?.locked) { link.removeAttribute('href'); link.setAttribute('aria-disabled', 'true'); }
+                    else { link.href = link.dataset.destination; link.removeAttribute('aria-disabled'); }
+                });
+                const notes = moduleElement.querySelector('[data-module-notes]'); if (notes) notes.disabled = learning?.locked === true;
+                const lock = moduleElement.querySelector('.module-lock-message'); if (lock) lock.textContent = learning?.lockReason || '';
+                const test = moduleElement.querySelector('[data-module-test]'); if (test) test.textContent = learning?.moduleQuiz?.passed ? '✓ Module test passed' : 'Take module test';
                 const lessonsInModule = [...moduleElement.querySelectorAll('[data-player-lesson]')];
                 lessonsInModule.forEach((lessonElement) => {
                     const lessonDone = completedLessonIds.has(String(lessonElement.dataset.playerLesson));
                     let lessonCheck = lessonElement.querySelector('.completion-check');
+                    if (!lessonDone && lessonCheck) lessonCheck.remove();
                     if (lessonDone && !lessonCheck) {
                         lessonCheck = document.createElement('span');
                         lessonCheck.className = 'completion-check';
@@ -146,29 +180,64 @@ document.addEventListener('DOMContentLoaded', async () => {
                         lessonElement.appendChild(lessonCheck);
                     }
                 });
-                const completedCount = lessonsInModule.filter((lesson) => completedLessonIds.has(String(lesson.dataset.playerLesson))).length;
+                const requiredLessons = lessonsInModule.filter((lesson) => lesson.dataset.lessonRequired !== 'false');
+                const completedCount = requiredLessons.filter((lesson) => completedLessonIds.has(String(lesson.dataset.playerLesson))).length;
                 const countElement = moduleElement.querySelector('[data-module-count]');
-                if (countElement) countElement.textContent = `${completedCount}/${lessonsInModule.length}`;
-                const isComplete = lessonsInModule.length > 0 && completedCount === lessonsInModule.length;
+                if (countElement) countElement.textContent = `${completedCount}/${requiredLessons.length}`;
+                const isComplete = learning?.completed === true;
                 moduleElement.querySelector('[data-module-check]')?.classList.toggle('hidden', !isComplete);
             });
-            const allModulesComplete = sections.length > 0 && [...curriculumContainer.querySelectorAll('[data-player-module]')]
-                .every((moduleElement) => {
-                    const lessonElements = [...moduleElement.querySelectorAll('[data-player-lesson]')];
-                    return lessonElements.length > 0 && lessonElements.every((lesson) => completedLessonIds.has(String(lesson.dataset.playerLesson)));
-                });
-            document.getElementById('player-course-completed')?.classList.toggle('hidden', !allModulesComplete);
+            const requiredLessonElements = [...curriculumContainer.querySelectorAll('[data-player-lesson]')]
+                .filter((lesson) => lesson.dataset.lessonRequired !== 'false');
+            const isCourseComplete = courseCompleted ?? (requiredLessonElements.length > 0 && requiredLessonElements.every((lesson) => completedLessonIds.has(String(lesson.dataset.playerLesson))));
+            document.getElementById('player-course-completed')?.classList.toggle('hidden', !isCourseComplete);
             if (window.lucide) lucide.createIcons();
         };
         updateCompletionUI();
+        const refreshLearning = async () => {
+            if (user?.role !== 'student') return;
+            const response = await window.api.progress.getCourseLessons(courseId);
+            completedLessonIds.clear();
+            (response.data.completedLessonIds || []).forEach(id => completedLessonIds.add(String(id)));
+            learningModules = response.data.modules || learningModules;
+            courseCompleted = response.data.courseCompleted;
+            updateCompletionUI();
+        };
+        window.addEventListener('quiz:updated', async () => {
+            try {
+                await refreshLearning();
+                const status = document.getElementById('lesson-progress-status');
+                if (completedLessonIds.has(String(lessonId))) { status.textContent = 'Lesson completed. Your progress is saved.'; status.classList.remove('hidden'); }
+            }
+            catch (error) { showPlayerError(`Quiz saved, but progress could not refresh: ${error.message}`); }
+        });
+        window.addEventListener('lesson:content-completed', async () => {
+            const status = document.getElementById('lesson-progress-status');
+            status.textContent = 'Content completed and saved. Pass the lesson quiz to complete this lesson. You can continue to the next lesson.';
+            status.classList.remove('hidden');
+            try { await refreshLearning(); } catch (error) { console.error(error); }
+        });
         const progressStatus = document.getElementById('lesson-progress-status');
         const isCurrentLessonEvent = (event) => String(event.detail?.lessonId) === String(lessonId);
-        window.addEventListener('lesson:completed', (event) => {
+        window.addEventListener('lesson:completed', async (event) => {
+            const newlyCompleted = event.detail?.lessonId && !completedLessonIds.has(String(event.detail.lessonId));
+            if (typeof event.detail?.courseCompleted === 'boolean') courseCompleted = event.detail.courseCompleted;
             updateCompletionUI(event.detail?.lessonId);
             if (progressStatus && isCurrentLessonEvent(event)) {
                 progressStatus.textContent = 'Lesson completed. Your progress is saved.';
                 progressStatus.classList.remove('hidden', 'text-red-600', 'dark:text-red-400');
                 progressStatus.classList.add('text-green-700', 'dark:text-green-400');
+            }
+            if (newlyCompleted && user?.role === 'student') {
+                try {
+                    const progressResponse = await window.api.progress.getCourseLessons(courseId);
+                    learningModules = progressResponse.data.modules || learningModules;
+                    (progressResponse.data.completedLessonIds || []).forEach((id) => completedLessonIds.add(String(id)));
+                    if (typeof progressResponse.data.courseCompleted === 'boolean') courseCompleted = progressResponse.data.courseCompleted;
+                    updateCompletionUI();
+                } catch (error) {
+                    console.error('Unable to refresh course completion state:', error);
+                }
             }
         });
         window.addEventListener('lesson:progress-saved', (event) => {
@@ -197,26 +266,72 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         if (window.lucide) lucide.createIcons();
 
+        const quizPanel = document.getElementById('lesson-quiz');
+        if (moduleTestId) {
+            playerFrame.classList.add('hidden'); lessonDescription.classList.add('hidden');
+            const module = modules.find(item => String(item._id) === moduleTestId);
+            if (!module) { showPlayerError('Module not found in this course.'); return; }
+            lessonTitle.textContent = `${module.title} · Module test`;
+            await window.mountQuiz(quizPanel, 'module', moduleTestId, courseId);
+            return;
+        }
         const player = new StreamingPlayer('course-video');
         if (lessonId) {
             if (!activeLesson) {
                 showPlayerError('That lesson is not part of this course.');
                 return;
             }
+            if (activeLesson.locked) {
+                playerFrame.classList.add('hidden'); lessonDescription.classList.add('hidden');
+                lessonTitle.textContent = activeLesson.title;
+                showPlayerError(learningModules.find(item => item.id === String(activeLesson.module))?.lockReason || 'Pass the previous module test first.');
+                return;
+            }
+            await window.mountQuiz(quizPanel, 'lesson', activeLesson._id, courseId);
             lessonTitle.textContent = activeLesson.title;
             lessonDescription.textContent = activeLesson.description || '';
+            const activeIndex = orderedLessons.findIndex((lesson) => String(lesson._id) === String(activeLesson._id));
+            for (const [direction, adjacent, boundary] of [
+                ['previous', orderedLessons[activeIndex - 1], 'First lesson'],
+                ['next', orderedLessons[activeIndex + 1], 'Last lesson']
+            ]) {
+                const link = document.getElementById(`${direction}-lesson`);
+                const title = document.getElementById(`${direction}-lesson-title`);
+                if (!link || !title) continue;
+                const activeModule = modules.find(item => String(item._id) === String(activeLesson.module));
+                const needsModuleTest = direction === 'next' && activeModule?.learning?.moduleQuiz && !activeModule.learning.moduleQuiz.passed && (!adjacent || String(adjacent.module) !== String(activeLesson.module));
+                if (needsModuleTest) {
+                    title.textContent = 'Module test';
+                    link.querySelector('.lesson-navigation-label').textContent = 'Finish module';
+                    link.href = `learn.html?course=${encodeURIComponent(courseId)}&module=${activeModule._id}`;
+                    link.setAttribute('aria-disabled', 'false'); link.tabIndex = 0;
+                    continue;
+                }
+                if (adjacent?.locked) { title.textContent = 'Pass the previous module test first'; continue; }
+                title.textContent = adjacent?.title || boundary;
+                link.setAttribute('aria-disabled', String(!adjacent));
+                if (adjacent) {
+                    link.href = `learn.html?course=${encodeURIComponent(courseId)}&lesson=${encodeURIComponent(adjacent._id)}`;
+                    link.setAttribute('tabindex', '0');
+                    link.setAttribute('aria-label', `${direction === 'previous' ? 'Previous' : 'Next'} lesson: ${adjacent.title}`);
+                }
+            }
+            document.getElementById('lesson-navigation')?.classList.remove('hidden');
             if (['text', 'document'].includes(activeLesson.type)) {
                 playerFrame.classList.add('hidden');
                 textPanel.classList.remove('hidden');
                 textContent.textContent = activeLesson.content || 'No written content has been added for this lesson.';
-                document.getElementById('complete-text-lesson').addEventListener('click', async (event) => {
+                const completeButton = document.getElementById('complete-text-lesson');
+                completeButton.classList.toggle('hidden', user?.role !== 'student');
+                if (user?.role !== 'student') return;
+                completeButton.addEventListener('click', async (event) => {
                     const completeButton = event.currentTarget;
                     completeButton.disabled = true;
                     try {
                         const completion = await window.apiCall(`/lessons/${encodeURIComponent(activeLesson._id)}/complete`, { method: 'POST' });
-                        textStatus.textContent = 'Lesson completed. Your course progress is updated.';
-                        completeButton.textContent = 'COMPLETED';
-                        if (completion.data?.completed) window.dispatchEvent(new CustomEvent('lesson:completed', { detail: { lessonId: activeLesson._id } }));
+                        textStatus.textContent = completion.data?.completed ? 'Lesson completed. Your course progress is updated.' : 'Content completed and saved. Pass the lesson quiz to complete this lesson.';
+                        completeButton.textContent = 'CONTENT COMPLETED';
+                        window.dispatchEvent(new CustomEvent(completion.data?.completed ? 'lesson:completed' : 'lesson:content-completed', { detail: { lessonId: activeLesson._id, courseCompleted: completion.data?.courseCompleted } }));
                     } catch (error) {
                         textStatus.textContent = error.message;
                         completeButton.disabled = false;
@@ -238,7 +353,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             try {
                 await player.loadManifest(activeLesson.media);
-                new ProgressTracker(video, activeLesson._id);
+                if (user?.role === 'student') new ProgressTracker(video, activeLesson._id);
             } catch (error) {
                 showPlayerError(error.message || 'Unable to play this lesson.');
             }

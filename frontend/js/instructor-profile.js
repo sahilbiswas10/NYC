@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         for (const course of profile.courses) {
             const card = document.createElement('article'); card.className = 'bg-[var(--bg-color)] brutal-border brutal-shadow p-6 flex flex-col';
             const title = document.createElement('h3'); title.className = 'text-2xl font-black uppercase'; title.textContent = course.title;
-            const description = document.createElement('p'); description.className = 'font-bold mt-3 flex-grow'; description.textContent = course.shortDescription || '';
+            const description = document.createElement('p'); description.className = 'course-copy mt-3 flex-grow'; description.textContent = course.shortDescription || '';
             const link = document.createElement('a'); link.href = `course.html?course=${encodeURIComponent(course._id)}`; link.className = 'mt-6 bg-[var(--primary)] text-black brutal-border py-3 text-center font-black uppercase'; link.textContent = 'VIEW COURSE';
             card.append(title, description, link); courseList.appendChild(card);
         }

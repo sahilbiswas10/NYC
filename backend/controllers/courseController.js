@@ -124,6 +124,14 @@ exports.createCourse = async (req, res) => {
                 return res.status(400).json({ success: false, error: 'Choose an active instructor profile' });
             }
         }
+        if (data.demoVideo === '') data.demoVideo = null;
+        if (data.demoVideo) {
+            if (!mongoose.isValidObjectId(data.demoVideo)) return res.status(400).json({ success: false, error: 'Invalid demo media id' });
+            const demo = await Media.findById(data.demoVideo);
+            if (!demo || demo.mediaType !== 'video' || !(await canManageMedia(demo, req.user))) {
+                return res.status(400).json({ success: false, error: 'Choose a video uploaded to this course by an authorized user' });
+            }
+        }
         data.title = title;
         data.slug = slug;
         data.instructor = req.user.id;
@@ -188,7 +196,7 @@ exports.updateCourse = async (req, res) => {
             if (req.body.status === 'published') {
                 const [moduleCount, lessons] = await Promise.all([
                     Module.countDocuments({ course: course._id }),
-                    Lesson.find({ course: course._id }).select('type media isRequired')
+                    Lesson.find({ course: course._id }).select('type media content isRequired')
                 ]);
                 if (!course.description?.trim() || moduleCount === 0 || lessons.length === 0 || !lessons.some((lesson) => lesson.isRequired)) {
                     return res.status(400).json({ success: false, error: 'Add a course description, a module, and at least one required lesson before publishing' });
@@ -196,19 +204,40 @@ exports.updateCourse = async (req, res) => {
                 if (lessons.some((lesson) => ['video', 'audio'].includes(lesson.type) && !lesson.media) || lessons.some((lesson) => lesson.media && !['video', 'audio'].includes(lesson.type))) {
                     return res.status(400).json({ success: false, error: 'Attach compatible media to each video or audio lesson before publishing' });
                 }
+                if (lessons.some((lesson) => ['text', 'document'].includes(lesson.type) && (typeof lesson.content !== 'string' || !lesson.content.trim()))) {
+                    return res.status(400).json({ success: false, error: 'Add written content to each text or document lesson before publishing' });
+                }
                 const mediaIds = lessons.map((lesson) => lesson.media).filter(Boolean);
-                if (mediaIds.length && await Media.exists({ _id: { $in: mediaIds }, processingStatus: { $ne: 'ready' } })) {
+                if (course.demoVideo) mediaIds.push(course.demoVideo);
+                const media = mediaIds.length
+                    ? await Media.find({ _id: { $in: mediaIds } }).select('_id mediaType processingStatus')
+                    : [];
+                const byId = new Map(media.map((item) => [String(item._id), item]));
+                if (lessons.some((lesson) => lesson.media && (!byId.has(String(lesson.media)) || byId.get(String(lesson.media)).mediaType !== lesson.type))) {
+                    return res.status(400).json({ success: false, error: 'Attach an existing compatible media file to each video or audio lesson before publishing' });
+                }
+                if (lessons.some((lesson) => lesson.media && byId.get(String(lesson.media)).processingStatus !== 'ready')) {
                     return res.status(409).json({ success: false, error: 'Wait for all course media to finish processing before publishing' });
                 }
-                if (course.demoVideo && await Media.exists({ _id: course.demoVideo, processingStatus: { $ne: 'ready' } })) {
-                    return res.status(409).json({ success: false, error: 'Wait for the demo video to finish processing before publishing' });
+                if (course.demoVideo) {
+                    const demo = byId.get(String(course.demoVideo));
+                    if (!demo || demo.mediaType !== 'video') return res.status(400).json({ success: false, error: 'Attach an existing video file as the course demo before publishing' });
+                    if (demo.processingStatus !== 'ready') return res.status(409).json({ success: false, error: 'Wait for the demo video to finish processing before publishing' });
                 }
                 course.publishedAt = new Date();
             }
             course.status = req.body.status;
         }
 
+        const shouldNotify = ['title', 'description', 'objectives', 'prerequisites', 'demoVideo', 'status'].some(field => course.isModified(field));
         await course.save();
+        if (shouldNotify) {
+            const { notifyCourse, bestEffort } = require('../utils/notifications');
+            await bestEffort(() => notifyCourse(course._id, {
+                title: 'Course updated', message: `${course.title} has been updated. Open the course to see the latest details.`,
+                href: `/course.html?course=${course._id}&view=preview`, eventKey: `course-update:${course._id}:${course.updatedAt.getTime()}`
+            }));
+        }
         if (oldDemoId && oldDemoId !== String(course.demoVideo || '')) {
             const oldMedia = await Media.findById(oldDemoId);
             if (oldMedia) await cleanupMedia(oldMedia);

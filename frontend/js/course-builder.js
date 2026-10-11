@@ -36,6 +36,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     let moduleItems = [];
     let instructorChoicesLoaded = false;
 
+    const announcementPanel = document.createElement('section');
+    announcementPanel.className = 'feature-panel course-announcement';
+    announcementPanel.innerHTML = `<h2>Course announcement</h2><p>Send an in-app notification to students enrolled in this course.</p><form id="course-announcement-form"><label>Title<input name="title" maxlength="160" required></label><label>Message<textarea name="message" maxlength="3000" required></textarea></label><button class="feature-button" type="submit">Send announcement</button><p role="status" aria-live="polite"></p></form>`;
+    courseForm?.insertAdjacentElement('afterend', announcementPanel);
+    announcementPanel.querySelector('form').addEventListener('submit', async event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const button = form.querySelector('button');
+        const status = form.querySelector('[role="status"]');
+        button.disabled = true; status.textContent = 'Sending…';
+        try {
+            const values = new FormData(form);
+            const response = await window.apiCall(`/notifications/courses/${encodeURIComponent(courseId)}/announcement`, { method: 'POST', body: JSON.stringify({ title: values.get('title'), message: values.get('message') }) });
+            status.textContent = `Sent to ${response.recipients} enrolled students.`;
+            form.reset();
+        } catch (error) { status.textContent = error.message; }
+        finally { button.disabled = false; }
+    });
+
+
     const loadInstructorChoices = async () => {
         if (!instructorSelect || instructorChoicesLoaded) return;
         const response = await window.api.instructors.getAll();
@@ -198,6 +218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="flex flex-wrap items-center gap-2 w-full border-t-2 border-[var(--foreground)]/20 pt-3">
                             <button type="button" data-action="lesson-up" data-module="${module._id}" data-lesson="${lesson._id}" ${lessonIndex === 0 ? 'disabled' : ''} class="${builderButtonClass}">↑</button>
                             <button type="button" data-action="lesson-down" data-module="${module._id}" data-lesson="${lesson._id}" ${lessonIndex === lessons.length - 1 ? 'disabled' : ''} class="${builderButtonClass}">↓</button>
+                            <a href="../quiz-editor.html?kind=lesson&amp;target=${lesson._id}&amp;course=${courseId}" class="${builderButtonClass}">LESSON QUIZ</a>
                             <button type="button" data-action="lesson-edit" data-module="${module._id}" data-lesson="${lesson._id}" class="${builderButtonClass}">EDIT</button>
                             ${['video', 'audio'].includes(lesson.type) ? `<button type="button" data-action="lesson-upload" data-module="${module._id}" data-lesson="${lesson._id}" class="${builderButtonClass}">${lesson.media ? 'REPLACE MEDIA' : 'UPLOAD MEDIA'}</button>` : ''}
                             ${lesson.media ? `<button type="button" data-action="lesson-remove-media" data-module="${module._id}" data-lesson="${lesson._id}" class="${builderButtonClass}">REMOVE MEDIA</button>` : ''}
@@ -217,6 +238,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="flex flex-wrap items-center gap-2 w-full">
                                 <button type="button" data-action="module-up" data-module="${module._id}" ${moduleIndex === 0 ? 'disabled' : ''} class="${builderButtonClass}">↑</button>
                                 <button type="button" data-action="module-down" data-module="${module._id}" ${moduleIndex === moduleItems.length - 1 ? 'disabled' : ''} class="${builderButtonClass}">↓</button>
+                                <a href="../quiz-editor.html?kind=module&amp;target=${module._id}&amp;course=${courseId}" class="${builderButtonClass}">MODULE TEST</a>
                                 <button type="button" data-action="module-edit" data-module="${module._id}" class="${builderButtonClass}">EDIT</button>
                                 <button type="button" data-action="lesson-add" data-module="${module._id}" class="${builderButtonClass}">+ LESSON</button>
                                 <button type="button" data-action="module-notes" data-module="${module._id}" class="${builderButtonClass}">${module.notesOriginalFilename ? 'REPLACE MODULE NOTES' : 'UPLOAD MODULE NOTES'}</button>

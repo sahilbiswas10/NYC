@@ -16,6 +16,7 @@ const loadUser = async (token) => {
     if (!token) return null;
     try {
         const decoded = jwt.verify(token, jwtSecret);
+        if (decoded.purpose !== undefined || typeof decoded.id !== 'string') return null;
         return await User.findById(decoded.id).select('-password');
     } catch (error) {
         return null;
@@ -37,6 +38,7 @@ module.exports = async (req, res, next) => {
                 return res.status(401).send('Stream authorization invalid');
             }
             if (decoded.publicPreview !== true) {
+                if (typeof decoded.id !== 'string') return res.status(401).send('Stream authorization invalid');
                 req.user = await User.findById(decoded.id).select('-password');
                 if (!req.user) return res.status(401).send('Stream authorization invalid');
             }

@@ -12,15 +12,23 @@ const controllers = new Map();
 const activeJobs = new Map();
 
 const hasValidHls = async (media) => {
-    const hlsDir = path.resolve(__dirname, '../../storage/hls', String(media._id));
+    const mediaId = String(media._id);
+    if (!/^[a-f\d]{24}$/i.test(mediaId)) return false;
+    const hlsRoot = path.resolve(__dirname, '../../storage/hls');
+    const hlsDir = path.join(hlsRoot, mediaId);
     const manifestPath = path.join(hlsDir, 'master.m3u8');
     if (!media.hlsManifestPath || path.resolve(media.hlsManifestPath) !== manifestPath) return false;
     try {
+        const [realRoot, realDir, realManifest] = await Promise.all([
+            fs.realpath(hlsRoot), fs.realpath(hlsDir), fs.realpath(manifestPath)
+        ]);
+        if (realDir !== path.join(realRoot, mediaId) || realManifest !== path.join(realDir, 'master.m3u8')) return false;
         const manifest = await fs.readFile(manifestPath, 'utf8');
         const segments = manifest.split(/\r?\n/).filter((line) => line && !line.startsWith('#'));
         if (!segments.length) return false;
         for (const filename of segments) {
-            if (path.basename(filename) !== filename || !/^[A-Za-z0-9_.-]+$/.test(filename) || filename === '.' || filename === '..') return false;
+            if (!/^segment_\d{5,}\.ts$/.test(filename)) return false;
+            if (await fs.realpath(path.join(hlsDir, filename)) !== path.join(realDir, filename)) return false;
             await fs.access(path.join(hlsDir, filename), fs.constants.R_OK);
         }
         return true;
@@ -44,20 +52,20 @@ const processNext = () => {
             .catch((error) => {
                 if (!controller.signal.aborted) console.error(`Media processing failed (${mediaId}):`, error.message);
             })
-            .finally(() => {
+            .finally(async () => {
                 activeIds.delete(mediaId);
                 controllers.delete(mediaId);
                 activeJobs.delete(mediaId);
                 processNext();
-                const cleanupTimer = setTimeout(async () => {
-                    try {
+                try {
+                    const { cleanupMedia, isCleanupPending } = require('./mediaCleanup');
+                    if (isCleanupPending(mediaId)) {
                         const media = await Media.findById(mediaId);
-                        if (media) await require('./mediaCleanup').cleanupMedia(media);
-                    } catch (error) {
-                        console.error(`Unable to clean orphan media (${mediaId}):`, error.message);
+                        if (media) await cleanupMedia(media);
                     }
-                }, 60_000);
-                cleanupTimer.unref?.();
+                } catch (error) {
+                    console.error(`Unable to clean detached media (${mediaId}):`, error.message);
+                }
             });
     }
 };

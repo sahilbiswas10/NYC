@@ -1,7 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
+    let navigationPending = false;
+    let navigationResetTimer;
     // A page cached during the leave animation can be restored by browser Back
     // with its fade class still applied. Clear it every time a document returns.
-    window.addEventListener('pageshow', () => document.documentElement.classList.remove('page-leaving'));
+    window.addEventListener('pageshow', () => {
+        navigationPending = false;
+        window.clearTimeout(navigationResetTimer);
+        document.documentElement.classList.remove('page-leaving');
+    });
     document.documentElement.classList.remove('page-leaving');
     const getSystemDialog = () => {
         let dialog = document.getElementById('nyc-system-dialog');
@@ -80,117 +86,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(footer);
     }
 
-    {
-        const canvas = document.createElement('canvas');
-        canvas.className = 'ambient-motion-background';
-        canvas.setAttribute('aria-hidden', 'true');
-        document.body.prepend(canvas);
-        const context = canvas.getContext('2d');
-        if (context) {
-            let width = 0; let height = 0; let scrollTarget = window.scrollY; let scrollPosition = scrollTarget;
-            let pointerX = 0; let pointerY = 0; let frame = 0;
-            const resize = () => {
-                const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
-                width = window.innerWidth; height = window.innerHeight;
-                canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio);
-                context.setTransform(ratio, 0, 0, ratio, 0, 0);
-            };
-            const starColors = ['168,85,247', '34,211,238', '236,72,153', '226,232,255'];
-            const dots = Array.from({ length: Math.min(96, Math.max(42, Math.floor(window.innerWidth / 16))) }, (_, index) => ({
-                x: Math.random() * Math.max(1, window.innerWidth),
-                y: Math.random() * Math.max(1, window.innerHeight),
-                radius: .7 + Math.random() * 2.2,
-                phase: Math.random() * Math.PI * 2,
-                color: starColors[index % starColors.length],
-                drift: 4 + Math.random() * 14
-            }));
-            const paint = (time) => {
-                frame = requestAnimationFrame(paint);
-                scrollPosition += (scrollTarget - scrollPosition) * 0.075;
-                context.clearRect(0, 0, width, height);
-                const scrollWave = Math.sin(scrollPosition * 0.001 + time * 0.00014);
-                const nebula = context.createRadialGradient(width * (.25 + scrollWave * .08), height * .35, 0, width * .25, height * .35, Math.max(width, height) * .62);
-                nebula.addColorStop(0, 'rgba(124,58,237,.21)'); nebula.addColorStop(1, 'rgba(124,58,237,0)');
-                context.fillStyle = nebula; context.fillRect(0, 0, width, height);
-                const aurora = context.createRadialGradient(width * (.82 - scrollWave * .07), height * .72, 0, width * .82, height * .72, Math.max(width, height) * .55);
-                aurora.addColorStop(0, 'rgba(34,211,238,.17)'); aurora.addColorStop(1, 'rgba(34,211,238,0)');
-                context.fillStyle = aurora; context.fillRect(0, 0, width, height);
-                const positions = dots.map((dot) => {
-                    const y = ((dot.y - scrollPosition * 0.24) % (height + 40) + height + 40) % (height + 40) - 20;
-                    const pulse = 0.28 + (Math.sin(time * 0.0012 + dot.phase) + 1) * 0.34;
-                    const x = dot.x + pointerX * 0.04 + Math.sin(time * 0.00025 + dot.phase) * dot.drift;
-                    const shiftedY = y + pointerY * 0.035 + Math.cos(time * 0.00022 + dot.phase) * dot.drift;
-                    context.beginPath(); context.arc(x, shiftedY, dot.radius * (0.85 + pulse * 0.35), 0, Math.PI * 2);
-                    context.fillStyle = `rgba(${dot.color},${pulse})`; context.fill();
-                    return { x, y: shiftedY, pulse, color: dot.color };
-                });
-                for (let i = 0; i < positions.length; i++) {
-                    for (let j = i + 1; j < positions.length; j++) {
-                        const dx = positions[i].x - positions[j].x; const dy = positions[i].y - positions[j].y;
-                        const distance = Math.hypot(dx, dy);
-                        if (distance > 130) continue;
-                        context.beginPath(); context.moveTo(positions[i].x, positions[i].y); context.lineTo(positions[j].x, positions[j].y);
-                        context.strokeStyle = `rgba(${positions[i].color},${(1 - distance / 130) * 0.17})`; context.lineWidth = 1; context.stroke();
-                    }
-                }
-            };
-            resize();
-            window.addEventListener('resize', resize, { passive: true });
-            window.addEventListener('scroll', () => { scrollTarget = window.scrollY; }, { passive: true });
-            window.addEventListener('pointermove', (event) => { pointerX = event.clientX - width / 2; pointerY = event.clientY - height / 2; }, { passive: true });
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden) cancelAnimationFrame(frame);
-                else frame = requestAnimationFrame(paint);
-            });
-            frame = requestAnimationFrame(paint);
-        }
+    // The shared visual layer owns ambient and interaction motion. Loading it
+    // separately keeps navigation, authentication, and dialog behavior intact.
+    if (!document.querySelector('script[data-aurora-motion]')) {
+        const motionScript = document.createElement('script');
+        motionScript.src = '/js/aurora-motion.js';
+        motionScript.dataset.auroraMotion = '';
+        document.body.appendChild(motionScript);
     }
-    {
-        const revealTargets = document.querySelectorAll('main > *, body > section');
-        if ('IntersectionObserver' in window && revealTargets.length) {
-            document.body.classList.add('motion-ready');
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach((entry) => {
-                    if (!entry.isIntersecting) return;
-                    entry.target.classList.add('is-visible');
-                    observer.unobserve(entry.target);
-                });
-            }, { threshold: 0.08, rootMargin: '0px 0px -4% 0px' });
-            revealTargets.forEach((element, index) => {
-                element.classList.add('motion-reveal');
-                element.style.setProperty('--reveal-delay', `${Math.min(index % 4, 3) * 75}ms`);
-                observer.observe(element);
-            });
-        }
-    }
-    const replayMotion = (element) => {
-        element.classList.remove('motion-pop-in');
-        const siblingIndex = element.parentElement ? Array.prototype.indexOf.call(element.parentElement.children, element) : 0;
-        element.style.setProperty('--motion-delay', `${Math.min(Math.max(siblingIndex, 0), 7) * 42}ms`);
-        void element.offsetWidth;
-        element.classList.add('motion-pop-in');
-        window.setTimeout(() => {
-            element.classList.remove('motion-pop-in');
-            element.style.removeProperty('--motion-delay');
-        }, 700);
-    };
-    const dynamicMotionSelector = '.curriculum-module, .curriculum-lesson-row, .discussion-post, .course-review-card, article.brutal-shadow, table tbody tr, .module-notes-card';
-    const visibilityMotion = new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-            if (mutation.type === 'attributes') {
-                const element = mutation.target;
-                const wasHidden = (mutation.oldValue || '').split(/\s+/).includes('hidden');
-                if (wasHidden && !element.classList.contains('hidden') && !element.matches('dialog, .fixed.inset-0.z-50, .ambient-motion-background')) replayMotion(element);
-                continue;
-            }
-            for (const node of mutation.addedNodes) {
-                if (!(node instanceof Element)) continue;
-                if (node.matches(dynamicMotionSelector)) replayMotion(node);
-                node.querySelectorAll(dynamicMotionSelector).forEach(replayMotion);
-            }
-        }
-    });
-    visibilityMotion.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'], attributeOldValue: true, childList: true });
     document.addEventListener('click', (event) => {
         if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
         const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
@@ -198,25 +101,49 @@ document.addEventListener('DOMContentLoaded', () => {
         const destination = new URL(link.href, window.location.href);
         if (destination.origin !== window.location.origin) return;
         if (destination.pathname === window.location.pathname && destination.search === window.location.search) return;
+        // Documents and media keep their native download/viewer behavior.
+        if (!/^https?:$/.test(destination.protocol) || destination.pathname.startsWith('/api/') || /\.(?:pdf|zip|mp4|webm|mp3|png|jpe?g|svg)$/i.test(destination.pathname)) return;
         event.preventDefault();
+        if (navigationPending) return;
+        navigationPending = true;
         document.documentElement.classList.add('page-leaving');
-        window.setTimeout(() => { window.location.assign(destination.href); }, 260);
+        // If navigation is cancelled or the destination stalls, restore this page.
+        navigationResetTimer = window.setTimeout(() => {
+            navigationPending = false;
+            document.documentElement.classList.remove('page-leaving');
+        }, 2500);
+        // Begin the request immediately; decorative motion must not delay navigation.
+        window.location.assign(destination.href);
     });
+    if (!window.nycNotificationsLoaded && !document.querySelector('script[src$="notifications.js"]')) {
+        const script = document.createElement('script'); script.src = '/js/notifications.js'; document.body.appendChild(script);
+    }
     const navLinks = document.getElementById('nav-links');
     if (!navLinks) return;
     navLinks.closest('nav')?.classList.add('lms-nav');
 
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
-    
+    let user = null;
     if (token && userStr) {
-        try {
-            const user = JSON.parse(userStr);
+        try { user = JSON.parse(userStr); } catch (error) {}
+    }
+
+    if (user && typeof user === 'object' && !Array.isArray(user)) {
             let dashLink = 'student/dashboard.html';
             if (user.role === 'instructor') dashLink = 'instructor/dashboard.html';
             else if (user.role === 'admin') dashLink = 'admin/dashboard.html';
             const managementLinks = user.role === 'admin'
-                ? '<a href="/admin/users.html" class="uppercase hover:text-[var(--primary)]">Users</a><a href="/admin/enrollments.html" class="uppercase hover:text-[var(--primary)]">Enrollments</a><a href="/admin/payments.html" class="uppercase hover:text-[var(--primary)]">Payments</a><a href="/admin/media.html" class="uppercase hover:text-[var(--primary)]">Media</a><a href="/admin/community.html" class="uppercase hover:text-[var(--primary)]">Community</a>'
+                ? `<details id="admin-management" class="nav-management">
+                    <summary id="management-toggle" aria-controls="management-links" aria-expanded="false">Management <i data-lucide="chevron-down" aria-hidden="true"></i></summary>
+                    <div id="management-links" class="nav-management-links">
+                        <a href="/admin/users.html">Users</a>
+                        <a href="/admin/enrollments.html">Enrollments</a>
+                        <a href="/admin/payments.html">Payments</a>
+                        <a href="/admin/media.html">Media</a>
+                        <a href="/admin/community.html">Community</a>
+                    </div>
+                </details>`
                 : user.role === 'instructor'
                     ? '<a href="/instructor/courses.html" class="uppercase hover:text-[var(--primary)]">My Courses</a>'
                     : '';
@@ -238,8 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 heroBtn.href = '/' + dashLink;
                 heroBtn.innerHTML = 'Go to Dashboard <i data-lucide="arrow-right" class="w-6 h-6 inline"></i>';
             }
-
-        } catch(e) {}
     } else {
         navLinks.innerHTML = `
             <button id="theme-toggle" class="p-2 brutal-border bg-[var(--bg-color)] text-[var(--foreground)] hover:bg-[var(--primary)] transition-colors shadow-[2px_2px_0px_0px_var(--foreground)]"></button>
@@ -248,6 +173,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 <i data-lucide="user" class="w-4 h-4"></i> Login / Register
             </a>
         `;
+    }
+
+    const management = document.getElementById('admin-management');
+    if (management) {
+        const toggle = document.getElementById('management-toggle');
+        const closeManagement = () => {
+            management.open = false;
+            toggle.setAttribute('aria-expanded', 'false');
+        };
+        management.addEventListener('toggle', () => toggle.setAttribute('aria-expanded', String(management.open)));
+        management.querySelectorAll('a[href]').forEach((link) => {
+            if (new URL(link.href).pathname === window.location.pathname) {
+                link.setAttribute('aria-current', 'page');
+                toggle.classList.add('is-current');
+            }
+        });
+        document.addEventListener('pointerdown', (event) => {
+            if (management.open && !management.contains(event.target)) closeManagement();
+        });
+        document.addEventListener('focusin', (event) => {
+            if (management.open && !management.contains(event.target)) closeManagement();
+        });
+        management.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape' || !management.open) return;
+            event.preventDefault();
+            closeManagement();
+            toggle.focus();
+        });
+        window.addEventListener('pageshow', closeManagement);
     }
 
     lucide.createIcons();

@@ -5,6 +5,23 @@ const Media = require('../models/Media');
 const { canStreamMedia } = require('../utils/mediaAccess');
 const jwt = require('jsonwebtoken');
 const jwtSecret = require('../config/jwt');
+const hlsRoot = path.resolve(__dirname, '../../storage/hls');
+const isSegmentFilename = (filename) => typeof filename === 'string' && /^segment_\d{5,}\.ts$/.test(filename);
+
+const safeHlsFile = async (mediaId, filename) => {
+    const hlsDir = path.resolve(hlsRoot, mediaId);
+    const filePath = path.resolve(hlsDir, filename);
+    const [realRoot, realDir, realFile] = await Promise.all([
+        fs.promises.realpath(hlsRoot), fs.promises.realpath(hlsDir), fs.promises.realpath(filePath)
+    ]);
+    // A media folder or segment cannot redirect to another media's files.
+    if (realDir !== path.join(realRoot, mediaId) || realFile !== path.join(realDir, filename)) {
+        const error = new Error('Invalid HLS file path');
+        error.code = 'INVALID_HLS_PATH';
+        throw error;
+    }
+    return filePath;
+};
 
 exports.issueStreamTicket = async (req, res) => {
     try {
@@ -39,17 +56,18 @@ exports.getManifest = async (req, res) => {
         if (!(await canStreamMedia(media, req.user))) return res.status(403).send('Not authorized to stream this media');
         if (media.processingStatus !== 'ready') return res.status(400).send('Media not ready');
 
-        const hlsDir = path.resolve(__dirname, '../../storage/hls', req.params.mediaId);
+        const hlsDir = path.resolve(hlsRoot, req.params.mediaId);
         const manifestPath = path.resolve(hlsDir, 'master.m3u8');
         if (!media.hlsManifestPath || path.resolve(media.hlsManifestPath) !== manifestPath) {
             return res.status(404).send('Manifest missing');
         }
 
+        await safeHlsFile(req.params.mediaId, 'master.m3u8');
         const manifest = await fs.promises.readFile(manifestPath, 'utf8');
         const lines = manifest.split(/\r?\n/).map((line) => {
             if (!line || line.startsWith('#')) return line;
             const filename = path.basename(line);
-            if (filename !== line || !/^[A-Za-z0-9_.-]+$/.test(filename) || filename === '.' || filename === '..') {
+            if (filename !== line || !isSegmentFilename(filename)) {
                 throw new Error('Invalid HLS manifest entry');
             }
             return `/api/media/play/${encodeURIComponent(req.params.mediaId)}/segment/${encodeURIComponent(filename)}`;
@@ -59,6 +77,7 @@ exports.getManifest = async (req, res) => {
         res.send(lines.join('\n'));
     } catch (error) {
         if (error.code === 'ENOENT') return res.status(404).send('Manifest missing');
+        if (error.code === 'INVALID_HLS_PATH') return res.status(400).send('Invalid manifest path');
         res.status(500).send('Unable to load manifest');
     }
 };
@@ -72,22 +91,24 @@ exports.getSegment = async (req, res) => {
         if (media.processingStatus !== 'ready') return res.status(400).send('Media not ready');
 
         const filename = req.params.filename;
-        if (!/^[A-Za-z0-9_.-]+$/.test(filename) || filename === '.' || filename === '..') {
+        if (!isSegmentFilename(filename)) {
             return res.status(400).send('Invalid segment filename');
         }
-        const hlsDir = path.resolve(__dirname, '../../storage/hls', req.params.mediaId);
+        const hlsDir = path.resolve(hlsRoot, req.params.mediaId);
         const segmentPath = path.resolve(hlsDir, filename);
         const relativePath = path.relative(hlsDir, segmentPath);
         if (!relativePath || relativePath.startsWith(`..${path.sep}`) || relativePath === '..' || path.isAbsolute(relativePath)) {
             return res.status(400).send('Invalid segment filename');
         }
 
+        await safeHlsFile(req.params.mediaId, filename);
         await fs.promises.access(segmentPath, fs.constants.R_OK);
         res.setHeader('Content-Type', 'video/mp2t');
         res.setHeader('Cache-Control', 'private, no-store');
         res.sendFile(segmentPath);
     } catch (error) {
         if (error.code === 'ENOENT') return res.status(404).send('Segment not found');
+        if (error.code === 'INVALID_HLS_PATH') return res.status(400).send('Invalid segment path');
         res.status(500).send('Unable to load segment');
     }
 };

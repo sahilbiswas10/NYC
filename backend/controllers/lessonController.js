@@ -116,6 +116,8 @@ exports.deleteLesson = async (req, res) => {
         const media = lesson.media ? await Media.findById(lesson.media) : null;
         await LessonProgress.deleteMany({ lesson: lesson._id });
         await Enrollment.updateMany({ lastAccessedLesson: lesson._id }, { $unset: { lastAccessedLesson: 1, lastAccessedAt: 1 } });
+        await require('../models/QuizResult').deleteMany({ quiz: { $in: await require('../models/Quiz').find({ kind: 'lesson', target: lesson._id }).distinct('_id') } });
+        await require('../models/Quiz').deleteMany({ kind: 'lesson', target: lesson._id });
         await lesson.deleteOne();
         const totalLessons = await Lesson.countDocuments({ course: lesson.course._id });
         await Course.updateOne({ _id: lesson.course._id }, { $set: { totalLessons } });
@@ -143,7 +145,14 @@ exports.getLessonsByModule = async (req, res) => {
         if (course.status !== 'published' && !isAdmin && !isOwner && !isLearner) return res.status(404).json({ success: false, error: 'Module not found' });
         if (!isAdmin && !isOwner && !isLearner) return res.status(403).json({ success: false, error: 'Enroll in this course to view its lessons' });
         const lessons = await Lesson.find({ module: module._id }).sort({ order: 1, _id: 1 });
-        res.json({ success: true, data: lessons });
+        const quizLessons = new Set((await require('../models/Quiz').find({ kind: 'lesson', module: module._id, enabled: true }).distinct('target')).map(String));
+        const access = isLearner ? await require('../utils/learningAccess').getModuleLock(course._id, module._id, req.user.id) : null;
+        res.json({ success: true, data: lessons.map(lesson => {
+            const data = access?.locked
+                ? { _id: lesson._id, module: lesson.module, title: lesson.title, type: lesson.type, duration: lesson.duration, order: lesson.order, isRequired: lesson.isRequired, locked: true }
+                : lesson.toObject();
+            return { ...data, hasQuiz: quizLessons.has(String(lesson._id)) };
+        }) });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Unable to load lessons' });
     }

@@ -10,7 +10,9 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/aurora.css">
     <script src="js/theme.js"></script>
+    <script src="js/page-transitions.js"></script>
 </head>
 <body class="flex flex-col min-h-screen">
     <nav class="sticky top-0 z-50 bg-[var(--bg-color)] brutal-border border-x-0 border-t-0 px-6 py-4 flex items-center justify-between">
@@ -43,12 +45,24 @@
                 <h1 id="course-title" class="course-detail-title text-3xl md:text-4xl font-black uppercase tracking-tight text-[var(--foreground)] text-shadow-brutal">Loading course...</h1>
             </header>
 
-            <div class="bg-[var(--bg-color)] brutal-border brutal-shadow p-3 md:p-5">
-                <h2 class="font-black uppercase text-xl px-3 py-2">Course Preview</h2>
-                <div class="bg-black aspect-video flex items-center justify-center">
-                    <video id="course-demo" class="w-full h-full object-contain" controls controlsList="nodownload" playsinline></video>
+            <div class="course-preview-layout">
+                <div class="course-demo-card bg-[var(--bg-color)] brutal-border brutal-shadow p-3 md:p-5">
+                    <h2 class="font-black uppercase text-xl px-3 py-2">Course Preview</h2>
+                    <div class="bg-black aspect-video flex items-center justify-center">
+                        <video id="course-demo" class="w-full h-full object-contain" controls controlsList="nodownload" playsinline></video>
+                    </div>
+                    <p id="demo-status" class="p-3">Loading preview...</p>
                 </div>
-                <p id="demo-status" class="font-bold p-3">Loading preview...</p>
+                <aside class="course-access-summary space-y-5" aria-label="Course price and enrollment">
+                    <div id="course-price" class="course-price-badge hidden" aria-label="Course price"></div>
+                    <div id="course-enrollment-card" class="hidden bg-[var(--bg-color)] brutal-border brutal-shadow p-5">
+                        <div id="enrollment-panel" class="space-y-4">
+                            <p id="enrollment-message">Sign in and enroll to view course modules and lessons.</p>
+                            <a id="login-enroll-link" href="login.html" class="hidden w-full text-center bg-[var(--accent)] text-white brutal-border py-3 px-4 font-bold uppercase brutal-shadow hover:bg-black transition-colors">LOGIN TO ENROLL</a>
+                            <button id="enroll-button" class="hidden w-full bg-[var(--primary)] text-black brutal-border py-3 px-4 font-bold uppercase brutal-shadow hover:-translate-y-1 hover:-translate-x-1 transition-all">ENROLL IN COURSE</button>
+                        </div>
+                    </div>
+                </aside>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -64,14 +78,6 @@
                 </div>
                 <aside class="space-y-6">
                     <div id="course-instructor"></div>
-                    <div id="course-price" class="course-price-badge hidden" aria-label="Course price"></div>
-                    <div id="course-enrollment-card" class="hidden bg-[var(--bg-color)] brutal-border brutal-shadow p-6">
-                        <div id="enrollment-panel" class="space-y-4">
-                            <p id="enrollment-message" class="font-bold text-lg">Sign in and enroll to view course modules and lessons.</p>
-                            <a id="login-enroll-link" href="login.html" class="hidden w-full text-center bg-[var(--accent)] text-white brutal-border py-3 px-4 font-black uppercase text-xl brutal-shadow hover:bg-black transition-colors">LOGIN TO ENROLL</a>
-                            <button id="enroll-button" class="hidden w-full bg-[var(--primary)] text-black brutal-border py-3 px-4 font-black uppercase text-xl brutal-shadow hover:-translate-y-1 hover:-translate-x-1 transition-all">ENROLL IN COURSE</button>
-                        </div>
-                    </div>
                 </aside>
             </div>
         </section>

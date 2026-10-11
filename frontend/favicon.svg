@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect x="4" y="4" width="92" height="92" fill="#a855f7" stroke="#f2edff" stroke-width="8"/>
-  <path d="M11 24V11h13" fill="none" stroke="#22d3ee" stroke-width="5"/>
-  <text x="50" y="65" font-family="monospace" font-size="38" font-weight="900" text-anchor="middle" fill="#fff">NYC</text>
+  <defs><linearGradient id="chrome" x2="1" y2="1"><stop stop-color="#d4baff"/><stop offset=".5" stop-color="#9474dd"/><stop offset="1" stop-color="#60d9ed"/></linearGradient></defs>
+  <rect x="4" y="4" width="92" height="92" rx="22" fill="#10182e" stroke="url(#chrome)" stroke-width="6"/>
+  <text x="50" y="64" font-family="system-ui,sans-serif" font-size="34" font-weight="800" letter-spacing="-2" text-anchor="middle" fill="url(#chrome)">NYC</text>
 </svg>

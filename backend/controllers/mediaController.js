@@ -71,7 +71,9 @@ exports.deleteMedia = async (req, res) => {
             Course.exists({ demoVideo: media._id })
         ]);
         if (usedByLesson || usedByCourse) return res.status(409).json({ success: false, error: 'Remove this media from its lesson or course before deleting it' });
-        await cleanupMedia(media);
+        if (!(await cleanupMedia(media))) {
+            return res.status(409).json({ success: false, error: 'This media is still attached or processing and cannot be deleted' });
+        }
         res.json({ success: true, data: {} });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Unable to delete media' });

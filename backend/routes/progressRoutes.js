@@ -7,7 +7,9 @@ const Lesson = require('../models/Lesson');
 const Media = require('../models/Media');
 const { recalculateEnrollment } = require('../utils/courseProgress');
 
+const { getModuleLock } = require('../utils/learningAccess');
 const router = express.Router();
+const progressView = (progress, enrollment) => ({ ...progress.toObject(), contentCompleted: progress.completed, completed: enrollment.$locals.learningState.completedLessonIds.includes(String(progress.lesson)), courseCompleted: enrollment.status === 'completed' });
 
 const findStudentEnrollment = (studentId, courseId) => Enrollment.findOne({
     student: studentId,
@@ -22,18 +24,7 @@ router.get('/courses/:courseId/progress', protect, async (req, res) => {
         const enrollment = await findStudentEnrollment(req.user.id, req.params.courseId);
         if (!enrollment) return res.status(403).json({ success: false, error: 'Enroll in this course to view lesson progress' });
         await recalculateEnrollment(enrollment);
-        const completedLessonIds = await LessonProgress.find({
-            student: req.user.id,
-            course: req.params.courseId,
-            completed: true
-        }).distinct('lesson');
-        res.json({
-            success: true,
-            data: {
-                completedLessonIds: completedLessonIds.map(String),
-                courseCompleted: enrollment.status === 'completed'
-            }
-        });
+        res.json({ success: true, data: enrollment.$locals.learningState });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Unable to load course progress' });
     }
@@ -41,6 +32,7 @@ router.get('/courses/:courseId/progress', protect, async (req, res) => {
 
 router.put('/lessons/:lessonId/progress', protect, async (req, res) => {
     try {
+        if (req.user.role !== 'student') return res.status(403).json({ success: false, error: 'Student access required' });
         if (!mongoose.isValidObjectId(req.params.lessonId)) return res.status(404).json({ success: false, error: 'Lesson not found' });
         const currentTimeInput = Number(req.body.currentTime);
         const clientDuration = Number(req.body.duration);
@@ -52,6 +44,8 @@ router.put('/lessons/:lessonId/progress', protect, async (req, res) => {
         if (!['video', 'audio'].includes(lesson.type) || !lesson.media) return res.status(400).json({ success: false, error: 'This lesson does not have playable media' });
         const enrollment = await findStudentEnrollment(req.user.id, lesson.course);
         if (!enrollment) return res.status(403).json({ success: false, error: 'Not enrolled in course' });
+        const access = await getModuleLock(lesson.course, lesson.module, req.user.id);
+        if (!access || access.locked) return res.status(403).json({ success: false, error: access?.lockReason || 'Module unavailable' });
         const media = await Media.findById(lesson.media).select('duration processingStatus');
         if (!media || media.processingStatus !== 'ready') return res.status(409).json({ success: false, error: 'Lesson media is not ready' });
 
@@ -69,9 +63,8 @@ router.put('/lessons/:lessonId/progress', protect, async (req, res) => {
         );
         enrollment.lastAccessedLesson = lesson._id;
         enrollment.lastAccessedAt = new Date();
-        await enrollment.save();
         await recalculateEnrollment(enrollment);
-        res.json({ success: true, data: progress });
+        res.json({ success: true, data: progressView(progress, enrollment) });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Unable to save lesson progress' });
     }
@@ -79,11 +72,14 @@ router.put('/lessons/:lessonId/progress', protect, async (req, res) => {
 
 router.post('/lessons/:lessonId/complete', protect, async (req, res) => {
     try {
+        if (req.user.role !== 'student') return res.status(403).json({ success: false, error: 'Student access required' });
         if (!mongoose.isValidObjectId(req.params.lessonId)) return res.status(404).json({ success: false, error: 'Lesson not found' });
         const lesson = await Lesson.findById(req.params.lessonId);
         if (!lesson) return res.status(404).json({ success: false, error: 'Lesson not found' });
         const enrollment = await findStudentEnrollment(req.user.id, lesson.course);
         if (!enrollment) return res.status(403).json({ success: false, error: 'Not enrolled in course' });
+        const access = await getModuleLock(lesson.course, lesson.module, req.user.id);
+        if (!access || access.locked) return res.status(403).json({ success: false, error: access?.lockReason || 'Module unavailable' });
         let currentTime = 0;
         let duration = 0;
         if (['video', 'audio'].includes(lesson.type)) {
@@ -104,9 +100,8 @@ router.post('/lessons/:lessonId/complete', protect, async (req, res) => {
         );
         enrollment.lastAccessedLesson = lesson._id;
         enrollment.lastAccessedAt = new Date();
-        await enrollment.save();
         await recalculateEnrollment(enrollment);
-        res.json({ success: true, data: progress });
+        res.json({ success: true, data: progressView(progress, enrollment) });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Unable to complete this lesson' });
     }
@@ -116,12 +111,12 @@ router.get('/student/continue-watching', protect, async (req, res) => {
     try {
         const inProgress = await LessonProgress.find({ student: req.user.id, completed: false })
             .sort({ lastWatchedAt: -1 }).limit(30).populate('lesson', 'title').populate('course', 'title');
-        const activeEnrollments = await Enrollment.find({ student: req.user.id, status: 'active' }).select('course').lean();
-        const activeCourseIds = new Set(activeEnrollments.map((item) => String(item.course)));
+        const enrollments = await Enrollment.find({ student: req.user.id, status: { $in: ['active', 'completed'] } }).select('course').lean();
+        const enrolledCourseIds = new Set(enrollments.map((item) => String(item.course)));
         const continueWatching = [];
         for (const progress of inProgress) {
             if (!progress.lesson || !progress.course) continue;
-            if (!activeCourseIds.has(String(progress.course._id))) continue;
+            if (!enrolledCourseIds.has(String(progress.course._id))) continue;
             continueWatching.push({
                 courseId: progress.course._id,
                 courseTitle: progress.course.title,

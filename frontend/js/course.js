@@ -95,6 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loadCurriculum = async () => {
         const container = document.getElementById('course-curriculum');
         const completedLessonIds = new Set();
+        let courseCompleted = null;
         container.textContent = 'Loading course content...';
         try {
             let currentUser = null;
@@ -104,6 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     const progressResponse = await window.api.progress.getCourseLessons(courseId);
                     (progressResponse.data.completedLessonIds || []).forEach((lessonId) => completedLessonIds.add(String(lessonId)));
+                    if (typeof progressResponse.data.courseCompleted === 'boolean') courseCompleted = progressResponse.data.courseCompleted;
                 } catch (error) {
                     console.error('Unable to load lesson completion state:', error);
                 }
@@ -116,29 +118,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const moduleSections = [];
-            let completedModules = 0;
+            let requiredLessonCount = 0;
+            let requiredCompletedCount = 0;
             for (let moduleIndex = 0; moduleIndex < modulesResponse.data.length; moduleIndex++) {
                 const module = modulesResponse.data[moduleIndex];
                 const lessonsResponse = await window.api.modules.getLessons(module._id);
                 const lessons = lessonsResponse.data;
-                const completedCount = lessons.filter((lesson) => completedLessonIds.has(String(lesson._id))).length;
-                const isModuleComplete = lessons.length > 0 && completedCount === lessons.length;
-                if (isModuleComplete) completedModules++;
+                const requiredLessons = lessons.filter((lesson) => lesson.isRequired !== false || lesson.hasQuiz);
+                const completedCount = requiredLessons.filter((lesson) => completedLessonIds.has(String(lesson._id))).length;
+                const isModuleComplete = module.learning?.completed === true;
+                requiredLessonCount += requiredLessons.length;
+                requiredCompletedCount += completedCount;
                 const completionIcon = (label) => `<span class="completion-check" role="img" aria-label="${label}"><i data-lucide="check" aria-hidden="true"></i></span>`;
                 const lessonItems = lessons.map((lesson, lessonIndex) => {
                     const isCompleted = completedLessonIds.has(String(lesson._id));
                     return `
                         <li class="curriculum-lesson-row">
                             <div class="curriculum-lesson-info">
-                                <h4 class="curriculum-lesson-title">LESSON ${moduleIndex + 1}.${lessonIndex + 1} · ${courseHtml(lesson.title)}${isCompleted ? completionIcon('Lesson completed') : ''}</h4>
+                                <h4 class="curriculum-lesson-title">Lesson ${moduleIndex + 1}.${lessonIndex + 1} · ${courseHtml(lesson.title)}${isCompleted ? completionIcon('Lesson completed') : ''}</h4>
                                 <p class="curriculum-lesson-meta">${courseHtml(lesson.type)}${lesson.duration ? ` · ${Math.ceil(lesson.duration / 60)} min` : ''}</p>
                             </div>
-                            <a href="learn.html?course=${encodeURIComponent(courseId)}&lesson=${encodeURIComponent(lesson._id)}" class="curriculum-open-lesson">Open lesson</a>
+                            ${module.learning?.locked ? '<span class="curriculum-lesson-meta">Locked</span>' : `<a href="learn.html?course=${encodeURIComponent(courseId)}&lesson=${encodeURIComponent(lesson._id)}" class="curriculum-open-lesson">Open lesson</a>`}
                         </li>
                     `;
                 }).join('');
                 const moduleCompleteMark = isModuleComplete ? completionIcon('Module completed') : '';
-                const notes = module.notesOriginalFilename
+                const notes = !module.learning?.locked && module.notesOriginalFilename
                     ? `<button type="button" data-module-notes="${module._id}" class="module-notes-link mb-4" aria-label="View notes for module ${moduleIndex + 1}"><span class="module-notes-label">MODULE ${moduleIndex + 1} NOTES</span><span class="module-notes-filename">${courseHtml(module.notesOriginalFilename)}</span><span class="module-notes-action">VIEW NOTES</span></button>`
                     : '';
                 moduleSections.push(`
@@ -146,23 +151,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <summary class="curriculum-module-summary">
                             <span class="curriculum-module-heading">MODULE ${moduleIndex + 1} · ${courseHtml(module.title)}</span>
                             <span class="curriculum-module-summary-meta">
-                                ${showCompletion ? `<span class="curriculum-module-count">${completedCount}/${lessons.length}</span>` : ''}
+                                ${showCompletion ? `<span class="curriculum-module-count">${completedCount}/${requiredLessons.length}</span>` : ''}
                                 ${moduleCompleteMark}
                                 <i data-lucide="chevron-down" class="curriculum-chevron" aria-hidden="true"></i>
                             </span>
                         </summary>
                         <div class="curriculum-module-content">
                             ${module.description ? `<p class="module-copy curriculum-module-description">${courseHtml(module.description)}</p>` : ''}
+                            ${module.learning?.locked ? `<p class="module-lock-message">${courseHtml(module.learning.lockReason)}</p>` : ''}
                             ${notes}
                             ${lessonItems ? `<ul class="curriculum-lesson-list">${lessonItems}</ul>` : '<p class="curriculum-empty">No lessons in this module yet.</p>'}
+                            ${module.learning?.moduleQuiz && !module.learning.locked ? `<a class="feature-button module-test-link" href="learn.html?course=${encodeURIComponent(courseId)}&module=${module._id}">${module.learning.moduleQuiz.passed ? '✓ Module test passed' : 'Take module test'}</a>` : ''}
                         </div>
                     </details>
                 `);
             }
             container.innerHTML = moduleSections.join('');
-            if (completedModules === modulesResponse.data.length && completedModules > 0) {
-                document.getElementById('course-completion-state')?.classList.remove('hidden');
-            }
+            const isCourseComplete = courseCompleted ?? (requiredLessonCount > 0 && requiredCompletedCount === requiredLessonCount);
+            document.getElementById('course-completion-state')?.classList.toggle('hidden', !isCourseComplete);
             container.addEventListener('click', async (event) => {
                 const button = event.target.closest('[data-module-notes]');
                 if (!button) return;
@@ -275,7 +281,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (isEnrolled) {
             document.getElementById('course-enrollment-card')?.classList.add('hidden');
             notifyReviewEnrollment();
-            showEnrolledCourseTabs(requestedView === 'curriculum' ? 'curriculum' : 'preview');
+            showEnrolledCourseTabs(['curriculum', 'discussion'].includes(requestedView) ? requestedView : 'preview');
             await loadCurriculum();
             return;
         }

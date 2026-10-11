@@ -104,12 +104,15 @@ router.delete('/users/:id', protect, authorize('admin'), async (req, res) => {
         await Promise.all([
             Enrollment.deleteMany({ student: user._id }),
             LessonProgress.deleteMany({ student: user._id }),
+            require('../models/QuizResult').deleteMany({ student: user._id }),
+            require('../models/Notification').deleteMany({ recipient: user._id }),
             CourseReview.deleteMany({ student: user._id }),
             DiscussionPost.deleteMany({ $or: [{ author: user._id }, { parent: { $in: authoredThreads } }] }),
             Course.updateMany({ instructor: user._id }, { $set: { instructor: req.user.id } }),
             ...enrolledCourses.map(({ _id, count }) => Course.updateOne(
                 { _id },
-                [{ $set: { totalStudents: { $max: [0, { $subtract: [{ $ifNull: ['$totalStudents', 0] }, count] }] } } }]
+                [{ $set: { totalStudents: { $max: [0, { $subtract: [{ $ifNull: ['$totalStudents', 0] }, count] }] } } }],
+                { updatePipeline: true }
             ))
         ]);
         await user.deleteOne();
@@ -148,6 +151,7 @@ router.post('/enrollments', protect, authorize('admin'), async (req, res) => {
         let enrollment = await Enrollment.findOne({ student: student._id, course: course._id });
         if (enrollment && enrollment.status !== 'cancelled') return res.status(409).json({ success: false, error: 'This student already has access to the course' });
         if (enrollment) {
+            await require('../models/QuizResult').deleteMany({ student: student._id, course: course._id });
             await LessonProgress.deleteMany({ student: student._id, course: course._id });
             enrollment.status = 'active';
             enrollment.progress = 0;
@@ -182,6 +186,7 @@ router.put('/enrollments/:id', protect, authorize('admin'), async (req, res) => 
         if (action === 'restore') {
             if (enrollment.status !== 'cancelled') return res.status(409).json({ success: false, error: 'This enrollment is already active' });
             if (!(await Course.exists({ _id: enrollment.course, status: 'published' }))) return res.status(409).json({ success: false, error: 'Publish this course before restoring access' });
+            await require('../models/QuizResult').deleteMany({ student: enrollment.student, course: enrollment.course });
             await LessonProgress.deleteMany({ student: enrollment.student, course: enrollment.course });
             enrollment.status = 'active';
             enrollment.progress = 0;
@@ -194,6 +199,7 @@ router.put('/enrollments/:id', protect, authorize('admin'), async (req, res) => 
             enrollment.certificateCourseTitle = undefined;
         } else if (action === 'revoke') {
             if (enrollment.status === 'cancelled') return res.status(409).json({ success: false, error: 'This enrollment is already revoked' });
+            await require('../models/QuizResult').deleteMany({ student: enrollment.student, course: enrollment.course });
             await LessonProgress.deleteMany({ student: enrollment.student, course: enrollment.course });
             enrollment.status = 'cancelled';
             enrollment.progress = 0;
@@ -206,6 +212,7 @@ router.put('/enrollments/:id', protect, authorize('admin'), async (req, res) => 
             enrollment.certificateCourseTitle = undefined;
         } else {
             if (enrollment.status === 'cancelled') return res.status(409).json({ success: false, error: 'Restore access before resetting progress' });
+            await require('../models/QuizResult').deleteMany({ student: enrollment.student, course: enrollment.course });
             await LessonProgress.deleteMany({ student: enrollment.student, course: enrollment.course });
             enrollment.status = 'active';
             enrollment.progress = 0;

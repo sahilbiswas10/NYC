@@ -52,11 +52,17 @@ router.post('/:courseId/discussions', protect, async (req, res) => {
         let parent = null;
         if (req.body?.parentId) {
             if (!mongoose.isValidObjectId(req.body.parentId)) return res.status(400).json({ success: false, error: 'Discussion thread not found' });
-            parent = await DiscussionPost.findOne({ _id: req.body.parentId, course: access.course._id, parent: null }).select('_id');
+            parent = await DiscussionPost.findOne({ _id: req.body.parentId, course: access.course._id, parent: null }).select('_id author');
             if (!parent) return res.status(404).json({ success: false, error: 'Discussion thread not found' });
         }
         const post = await DiscussionPost.create({ course: access.course._id, author: req.user.id, parent: parent?._id || null, message });
         await post.populate('author', 'name');
+        if (parent && String(parent.author) !== String(req.user.id)) {
+            const { notify, bestEffort } = require('../utils/notifications');
+            await bestEffort(() => notify({ recipient: parent.author, course: access.course._id,
+                title: 'New reply to your discussion', message: `${post.author.name} replied: ${message.slice(0, 500)}`,
+                href: `/course.html?course=${access.course._id}&view=discussion`, eventKey: `reply:${post._id}` }));
+        }
         res.status(201).json({ success: true, data: post });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Unable to post to the discussion' });

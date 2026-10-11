@@ -38,6 +38,14 @@ NYC is a full-stack learning management system built with HTML, CSS, vanilla Jav
 
 Paid course checkout requires Razorpay server credentials. Configure them in the server environment using [PAYMENTS_SETUP.md](PAYMENTS_SETUP.md). Use test-mode credentials while developing.
 
+## Tests
+
+Run `npm test` for regression and HTTP integration checks. Run `npm run test:e2e` to also exercise the actual UI and HLS playback in Chromium.
+
+The integration tests require a local `mongod`, `ffmpeg`, and `ffprobe` on `PATH`. Browser tests use the installed Puppeteer dependency and require its Chromium download and access to the site's existing CDN assets. Set `NYC_TEST_MONGOD` to the `mongod` executable path if necessary.
+
+Each integration run starts a separate temporary MongoDB process and a copied app with its own storage, generated media, test accounts, and signing key. It never reads `.env`, connects to Atlas, uses payment credentials, or modifies your existing database or uploaded media. The old `test_e2e.js` and `e2e_audit.js` commands now use this same isolated runner and return a failing exit code when a check fails.
+
 ## Media storage
 
 Uploaded originals, generated HLS playlists/segments, course images, instructor photos, and module notes are stored under `storage/`. This directory is intentionally excluded from Git. Back it up separately if you need to preserve uploaded content. For production, use a host with persistent disk storage or adapt storage to a durable private object store while preserving the protected streaming routes.
@@ -49,3 +57,7 @@ GitHub Pages can host static files only; it cannot run this Express server, conn
 ## Repository hygiene
 
 `.env`, the local JWT key, installed packages, and uploaded/generated media are excluded by `.gitignore`. Copy `.env.example` for local setup and put production secrets in your hosting provider's environment settings.
+
+### Quizzes and notifications
+
+See [Quizzes and in-app notifications](QUIZZES_NOTIFICATIONS.md) for quiz authoring/import, module progression, and announcements.
